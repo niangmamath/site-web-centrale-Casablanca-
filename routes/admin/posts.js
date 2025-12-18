@@ -6,14 +6,14 @@ const CloudinaryStorage = require('multer-storage-cloudinary');
 const cloudinary = require('cloudinary').v2;
 require('dotenv').config();
 
-// Configuration de Cloudinary
+// Cloudinary configuration
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-// Configuration du stockage avec Multer et Cloudinary
+// Multer and Cloudinary storage configuration
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
@@ -25,26 +25,25 @@ const storage = new CloudinaryStorage({
 
 const upload = multer({ storage: storage });
 
-// Afficher tous les articles
+// Display all posts
 router.get('/', async (req, res) => {
   try {
     const posts = await Post.find().sort({ createdAt: -1 });
-    res.render('admin/posts/index', { posts });
+    res.render('admin/posts/index', { posts, title: 'Gérer le blog' });
   } catch (err) {
     console.error(err);
     res.status(500).send('Server Error');
   }
 });
 
-// Afficher le formulaire d'ajout d'un article
+// Display add post form
 router.get('/add', (req, res) => {
-  res.render('admin/posts/add', { tinymceApiKey: process.env.TINYMCE_API_KEY });
+  res.render('admin/posts/add', { tinymceApiKey: process.env.TINYMCE_API_KEY, title: 'Ajouter un article' });
 });
 
-// Ajouter un nouvel article
+// Add a new post
 router.post('/add', upload.single('image'), async (req, res) => {
   const { title, content, author } = req.body;
-  // L'URL de l'image est maintenant fournie par Cloudinary via req.file.path
   const imageUrl = req.file ? req.file.path : ''; 
 
   try {
@@ -55,31 +54,30 @@ router.post('/add', upload.single('image'), async (req, res) => {
       imageUrl
     });
     await newPost.save();
-    res.redirect('/admin/posts');
+    res.redirect(`${res.locals.adminPath}/posts`);
   } catch (err) {
     console.error(err);
     res.status(500).send('Server Error');
   }
 });
 
-// Afficher le formulaire de modification d'un article
+// Display edit post form
 router.get('/edit/:id', async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
-    res.render('admin/posts/edit', { post, tinymceApiKey: process.env.TINYMCE_API_KEY });
+    res.render('admin/posts/edit', { post, tinymceApiKey: process.env.TINYMCE_API_KEY, title: 'Modifier un article' });
   } catch (err) {
     console.error(err);
     res.status(500).send('Server Error');
   }
 });
 
-// Modifier un article
+// Edit a post
 router.put('/edit/:id', upload.single('image'), async (req, res) => {
   try {
     const { title, content, author } = req.body;
     let imageUrl = req.body.existingImageUrl;
 
-    // Si une nouvelle image est uploadée, on récupère sa nouvelle URL depuis Cloudinary
     if (req.file) {
       imageUrl = req.file.path;
     }
@@ -90,20 +88,45 @@ router.put('/edit/:id', upload.single('image'), async (req, res) => {
       author,
       imageUrl
     });
-    res.redirect('/admin/posts');
+    res.redirect(`${res.locals.adminPath}/posts`);
   } catch (err) {
     console.error(err);
     res.status(500).send('Server Error');
   }
 });
 
-// Supprimer un article
+// Delete a post
 router.delete('/delete/:id', async (req, res) => {
   try {
     await Post.findByIdAndDelete(req.params.id);
-    res.redirect('/admin/posts');
+    res.redirect(`${res.locals.adminPath}/posts`);
   } catch (err) {
     console.error(err);
+    res.status(500).send('Server Error');
+  }
+});
+
+// --- Comment Management ---
+
+// Delete a comment from a post
+router.delete('/:postId/comments/delete/:commentId', async (req, res) => {
+  try {
+    const { postId, commentId } = req.params;
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res.status(404).send('Post not found');
+    }
+
+    // Find the comment subdocument and remove it
+    const comment = post.comments.id(commentId);
+    if (comment) {
+      comment.deleteOne(); // Mongoose v6+
+      await post.save();
+    }
+    
+    res.redirect(`${res.locals.adminPath}/posts/edit/${postId}`);
+  } catch (err) {
+    console.error('Error deleting comment:', err);
     res.status(500).send('Server Error');
   }
 });

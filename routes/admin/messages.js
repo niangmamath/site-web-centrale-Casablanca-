@@ -25,7 +25,7 @@ router.post('/:id/toggle-read', async (req, res, next) => {
       message.read = !message.read;
       await message.save();
     }
-    res.redirect('/admin/messages');
+    res.redirect(`${res.locals.adminPath}/messages`);
   } catch (error) {
     console.error('Error toggling message read status:', error);
     next(error);

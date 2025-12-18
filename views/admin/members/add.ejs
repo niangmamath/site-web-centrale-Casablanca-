@@ -1,6 +1,6 @@
 <h1 class="text-3xl font-bold mb-8">Ajouter un Nouveau Membre</h1>
 
-<form action="/admin/members/add" method="POST" enctype="multipart/form-data" class="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow-md">
+<form action="<%= adminPath %>/members/add" method="POST" enctype="multipart/form-data" class="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow-md">
 
   <!-- Champ Nom -->
   <div class="mb-6">
@@ -36,7 +36,7 @@
   <!-- Boutons d'action -->
   <div class="flex items-center justify-between">
     <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Ajouter le Membre</button>
-    <a href="/admin/members" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Annuler</a>
+    <a href="<%= adminPath %>/members" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Annuler</a>
   </div>
 
 </form>

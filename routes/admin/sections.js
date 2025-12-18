@@ -6,7 +6,7 @@ const Section = require('../../models/section');
 router.get('/', async (req, res) => {
   try {
     const sections = await Section.find().sort({ page: 1 });
-    res.render('admin/sections/index', { sections });
+    res.render('admin/sections/index', { sections, title: 'Gérer les sections' });
   } catch (err) {
     console.error(err);
     res.status(500).send('Server Error');
@@ -15,7 +15,7 @@ router.get('/', async (req, res) => {
 
 // GET form to add a new section
 router.get('/add', (req, res) => {
-  res.render('admin/sections/add');
+  res.render('admin/sections/add', { title: 'Ajouter une section' });
 });
 
 // POST a new section
@@ -24,7 +24,7 @@ router.post('/add', async (req, res) => {
     const { title, content, page } = req.body;
     const newSection = new Section({ title, content, page });
     await newSection.save();
-    res.redirect('/admin/sections');
+    res.redirect(`${res.locals.adminPath}/sections`);
   } catch (err) {
     console.error(err);
     res.status(500).send('Server Error');
@@ -35,7 +35,7 @@ router.post('/add', async (req, res) => {
 router.get('/edit/:id', async (req, res) => {
   try {
     const section = await Section.findById(req.params.id);
-    res.render('admin/sections/edit', { section });
+    res.render('admin/sections/edit', { section, title: 'Modifier une section' });
   } catch (err) {
     console.error(err);
     res.status(500).send('Server Error');
@@ -47,7 +47,7 @@ router.put('/edit/:id', async (req, res) => {
   try {
     const { title, content, page } = req.body;
     await Section.findByIdAndUpdate(req.params.id, { title, content, page });
-    res.redirect('/admin/sections');
+    res.redirect(`${res.locals.adminPath}/sections`);
   } catch (err) {
     console.error(err);
     res.status(500).send('Server Error');
@@ -58,7 +58,7 @@ router.put('/edit/:id', async (req, res) => {
 router.delete('/delete/:id', async (req, res) => {
   try {
     await Section.findByIdAndDelete(req.params.id);
-    res.redirect('/admin/sections');
+    res.redirect(`${res.locals.adminPath}/sections`);
   } catch (err) {
     console.error(err);
     res.status(500).send('Server Error');

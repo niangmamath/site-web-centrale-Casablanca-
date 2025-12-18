@@ -2,9 +2,9 @@
     <div class="flex justify-between items-center mb-8">
         <h2 class="text-4xl font-bold text-gray-800">Manage Events</h2>
         <div>
-            <a href="/admin" class="inline-block text-white font-bold py-3 px-6 rounded-full transition duration-300 bg-gradient-to-r from-gray-500 to-gray-600 hover:opacity-90 transform hover:scale-105 mr-4">Retour au dashboard</a>
+            <a href="<%= adminPath %>" class="inline-block text-white font-bold py-3 px-6 rounded-full transition duration-300 bg-gradient-to-r from-gray-500 to-gray-600 hover:opacity-90 transform hover:scale-105 mr-4">Retour au dashboard</a>
             <a href="/events" class="inline-block text-white font-bold py-3 px-6 rounded-full transition duration-300 bg-gradient-to-r from-blue-500 to-indigo-600 hover:opacity-90 transform hover:scale-105 mr-4">Voir la page événements</a>
-            <a href="/admin/events/add" class="inline-block text-white font-bold py-3 px-6 rounded-full transition duration-300 bg-gradient-to-r from-green-500 to-teal-600 hover:opacity-90 transform hover:scale-105">Add New Event</a>
+            <a href="<%= adminPath %>/events/new" class="inline-block text-white font-bold py-3 px-6 rounded-full transition duration-300 bg-gradient-to-r from-green-500 to-teal-600 hover:opacity-90 transform hover:scale-105">Add New Event</a>
         </div>
     </div>
     <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
@@ -24,9 +24,9 @@
                         <td class="py-4 px-4"><%= event.date.toDateString() %></td>
                         <td class="py-4 px-4"><%= event.location %></td>
                         <td class="py-4 px-4">
-                            <a href="/admin/events/edit/<%= event._id %>" class="text-blue-600 hover:underline mr-4">Edit</a>
-                            <form action="/admin/events/delete/<%= event._id %>" method="POST" style="display:inline;">
-                                <button type-="submit" class="text-red-600 hover:underline">Delete</button>
+                            <a href="<%= adminPath %>/events/edit/<%= event._id %>" class="text-blue-600 hover:underline mr-4">Edit</a>
+                            <form action="<%= adminPath %>/events/delete/<%= event._id %>?_method=DELETE" method="POST" style="display:inline;">
+                                <button type="submit" class="text-red-600 hover:underline">Delete</button>
                             </form>
                         </td>
                     </tr>

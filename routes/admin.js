@@ -19,7 +19,8 @@ router.get('/', async (req, res) => {
       postCount, 
       eventCount, 
       memberCount,
-      unreadMessageCount // Passer le compte à la vue
+      unreadMessageCount, // Passer le compte à la vue
+      title: 'Tableau de bord' // Ajout du titre manquant
     });
   } catch (err) {
     console.error(err);

@@ -1,0 +1,51 @@
+<div class="container mx-auto p-4 sm:p-6 lg:p-8">
+
+    <% if (comments && comments.length > 0) { %>
+        <div class="bg-white shadow-md rounded-lg overflow-hidden">
+            <div class="p-4 border-b">
+                <h2 class="text-xl font-semibold text-gray-800">Vous avez <%= comments.length %> nouveau<%= comments.length > 1 ? 'x' : '' %> commentaire<%= comments.length > 1 ? 's' : '' %></h2>
+                <p class="text-sm text-gray-600">Passez en revue les nouvelles interactions sur vos articles.</p>
+            </div>
+
+            <div class="divide-y divide-gray-200">
+                <% comments.forEach(comment => { %>
+                    <div class="p-4 flex flex-col md:flex-row items-start md:items-center justify-between hover:bg-gray-50">
+                        <div class="flex-1 mb-4 md:mb-0">
+                            <div class="flex items-center mb-2">
+                                <span class="font-bold text-gray-800"><%= comment.author %></span>
+                                <span class="text-gray-500 text-sm mx-2">a commenté sur</span>
+                                <a href="/post/<%= comment.postId %>#comment-<%= comment._id %>" target="_blank" class="text-indigo-600 hover:underline font-semibold"><%= comment.postTitle %></a>
+                            </div>
+                            <p class="text-gray-700"><%= comment.content %></p>
+                            <p class="text-xs text-gray-400 mt-2">Le <%= new Date(comment.createdAt).toLocaleDateString('fr-FR') %> à <%= new Date(comment.createdAt).toLocaleTimeString('fr-FR') %></p>
+                        </div>
+
+                        <div class="flex-shrink-0 flex items-center">
+                             <!-- Form to mark as read -->
+                            <form action="<%= adminPath %>/comments/<%= comment._id %>/mark-read?_method=POST" method="POST" class="mr-2">
+                                <button type="submit" class="px-3 py-1.5 text-sm font-medium text-white bg-green-500 rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                    <i class="fas fa-check mr-1"></i> Marquer comme lu
+                                </button>
+                            </form>
+                             <!-- Form for direct deletion -->
+                            <form action="<%= adminPath %>/posts/<%= comment.postId %>/comments/<%= comment._id %>?_method=DELETE" method="POST" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce commentaire ?');">
+                                <button type="submit" class="px-3 py-1.5 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                                    <i class="fas fa-trash-alt mr-1"></i> Supprimer
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                <% }) %>
+            </div>
+        </div>
+    <% } else { %>
+        <div class="text-center bg-white p-12 rounded-lg shadow-md">
+            <div class="mx-auto mb-4 inline-block p-3 bg-green-100 rounded-full">
+                 <i class="fas fa-check fa-2x text-green-500"></i>
+            </div>
+            <h2 class="text-2xl font-semibold text-gray-800">Vous êtes à jour !</h2>
+            <p class="text-gray-500 mt-2">Aucun nouveau commentaire à modérer pour le moment.</p>
+        </div>
+    <% } %>
+
+</div>

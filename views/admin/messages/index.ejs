@@ -43,7 +43,7 @@
                                     <p class="text-gray-900 whitespace-no-wrap"><%= new Date(message.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) %></p>
                                 </td>
                                 <td class="px-5 py-5 border-b border-gray-200 text-sm text-right">
-                                    <form action="/admin/messages/<%= message._id %>/toggle-read" method="POST" class="inline-block">
+                                    <form action="<%= adminPath %>/messages/<%= message._id %>/toggle-read" method="POST" class="inline-block">
                                         <button type="submit" class="text-sm font-semibold leading-6 text-indigo-600 hover:text-indigo-500">
                                             <%= message.read ? 'Marquer comme non lu' : 'Marquer comme lu' %>
                                         </button>
