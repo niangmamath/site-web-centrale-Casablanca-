@@ -14,11 +14,11 @@ const expressLayouts = require('express-ejs-layouts');
 // Routers
 const indexRouter = require('./routes/index');
 const adminRouter = require('./routes/admin');
-const postsRouter = require('./routes/admin/posts'); // Pattern A
-const membersRouter = require('./routes/members'); // Pattern B
-const sectionsRouter = require('./routes/admin/sections'); // Pattern A
-const eventsRouter = require('./routes/events'); // Pattern B
-const messagesRouter = require('./routes/admin/messages'); // Pattern A
+const postsRouter = require('./routes/admin/posts');
+const membersRouter = require('./routes/members');
+const sectionsRouter = require('./routes/admin/sections');
+const eventsRouter = require('./routes/events');
+const messagesRouter = require('./routes/admin/messages');
 
 const app = express();
 
@@ -53,20 +53,21 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// --- CORRECTED ROUTE MOUNTING ---
+// --- Route Mounting ---
 
-// Pattern A routers: mounted with a specific prefix
 app.use('/', indexRouter);
 app.use('/admin', adminRouter);
 app.use('/admin/posts', postsRouter);
 app.use('/admin/sections', sectionsRouter);
 app.use('/admin/messages', messagesRouter);
 
-// Pattern B routers: contain full paths and are mounted at the root
-app.use('/', membersRouter); 
-app.use('/', eventsRouter);
+// Mount the events router under the '/events' path
+app.use('/events', eventsRouter);
 
-// --- END OF CORRECTIONS ---
+// This router contains full paths and can be mounted at the root
+app.use('/', membersRouter); 
+
+// --- End of Routes ---
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

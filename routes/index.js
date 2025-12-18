@@ -9,7 +9,8 @@ const Post = require('../models/post');
 router.get('/', async (req, res) => {
   try {
     const sections = await Section.find({ page: 'home' });
-    res.render('index', { sections, layout: 'layout' });
+    // CORRECTIF: Ajout de la variable 'title' manquante
+    res.render('index', { title: 'Accueil', sections, layout: 'layout' });
   } catch (err) {
     console.error(err);
     res.status(500).send('Server Error');
@@ -26,9 +27,8 @@ router.get('/events', async (req, res) => {
       event.shareUrl = `${req.protocol}://${req.get('host')}/events#${event._id}`;
     });
 
-    // CORRECTIF : Ajout de la variable 'title' manquante
     res.render('events', { 
-      title: 'Nos Événements', // Ajout du titre pour la vue
+      title: 'Nos Événements',
       events, 
       sections, 
       layout: 'layout' 
@@ -44,7 +44,8 @@ router.get('/team', async (req, res) => {
   try {
     const members = await Member.find().select('name role imageUrl linkedinUrl');
     const sections = await Section.find({ page: 'team' });
-    res.render('team', { members, sections, layout: 'layout' });
+    // CORRECTIF: Ajout de la variable 'title' manquante
+    res.render('team', { title: 'Notre Équipe', members, sections, layout: 'layout' });
   } catch (err) {
     console.error(err);
     res.status(500).send('Server Error');
@@ -58,7 +59,8 @@ router.get('/team/:id', async (req, res) => {
     if (!member) {
       return res.status(404).render('404', { layout: 'layout' });
     }
-    res.render('member-detail', { member, layout: 'layout' });
+    // CORRECTIF: Ajout de la variable 'title' manquante
+    res.render('member-detail', { title: member.name, member, layout: 'layout' });
   } catch (err) {
     console.error(err);
     res.status(500).send('Server Error');

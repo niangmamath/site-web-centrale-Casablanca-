@@ -4,12 +4,29 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= typeof title !== 'undefined' ? title : "Centrale Quanta" %></title>
+  
+  <!-- Standard Meta Tags -->
+  <meta name="description" content="<%= (typeof og !== 'undefined' && og.description) ? og.description.substring(0, 160) : 'Plongez au cœur de l\'infiniment petit et découvrez les technologies qui façonneront demain.' %>">
+
+  <!-- Open Graph / Facebook Meta Tags -->
+  <meta property="og:type" content="<%= (typeof og !== 'undefined') ? 'article' : 'website' %>">
+  <meta property="og:title" content="<%= (typeof og !== 'undefined' && og.title) ? og.title : title %>">
+  <meta property="og:description" content="<%= (typeof og !== 'undefined' && og.description) ? og.description.substring(0, 200) : 'Centrale Quanta est votre porte d\'entrée vers le monde fascinant de l\'informatique quantique.' %>">
+  <meta property="og:image" content="<%= (typeof og !== 'undefined' && og.image) ? og.image : 'https://res.cloudinary.com/dak7xowfm/image/upload/v1765661878/centrale_quanta_logo_mq9csz.jpg' %>">
+  <meta property="og:url" content="<%= (typeof og !== 'undefined' && og.url) ? og.url : '' %>">
+
+  <!-- Twitter Card Meta Tags -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="<%= (typeof og !== 'undefined' && og.title) ? og.title : title %>">
+  <meta name="twitter:description" content="<%= (typeof og !== 'undefined' && og.description) ? og.description.substring(0, 200) : 'Centrale Quanta est votre porte d\'entrée vers le monde fascinant de l\'informatique quantique.' %>">
+  <meta name="twitter:image" content="<%= (typeof og !== 'undefined' && og.image) ? og.image : 'https://res.cloudinary.com/dak7xowfm/image/upload/v1765661878/centrale_quanta_logo_mq9csz.jpg' %>">
+
   <!-- Favicon -->
   <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/dak7xowfm/image/upload/v1765661878/centrale_quanta_logo_mq9csz.jpg">
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <!-- Ajout de Font Awesome -->
+  
+  <!-- Tailwind & Font Awesome -->
+  <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <link rel="stylesheet" href="/css/style.css">
 </head>
 <body class="bg-gray-50 font-sans leading-normal tracking-normal">
   
