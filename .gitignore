@@ -8,6 +8,7 @@
 .idea
 .vscode
 *.swp
+.idx/
 
 # OS specific files
 .DS_Store
@@ -20,4 +21,3 @@ yarn-error.log*
 
 # Gemini specific files
 GEMINI.md
-airules.md
