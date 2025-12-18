@@ -1,0 +1,41 @@
+<h1 class="text-3xl font-bold mb-8">Gérer les Articles du Blog</h1>
+
+<div class="flex justify-end mb-6 space-x-4">
+  <a href="/admin" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">Retour au Dashboard</a>
+  <a href="/blog" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Voir le Blog</a>
+  <a href="/admin/posts/add" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Ajouter un Article</a>
+</div>
+
+<div class="bg-white shadow-md rounded-lg overflow-hidden">
+  <table class="min-w-full leading-normal">
+    <thead>
+      <tr>
+        <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Titre</th>
+        <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Auteur</th>
+        <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Date de Création</th>
+        <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100"></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% posts.forEach(post => { %>
+        <tr>
+          <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+            <p class="text-gray-900 whitespace-no-wrap"><%= post.title %></p>
+          </td>
+          <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+            <p class="text-gray-900 whitespace-no-wrap"><%= post.author %></p>
+          </td>
+          <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+            <p class="text-gray-900 whitespace-no-wrap"><%= new Date(post.createdAt).toLocaleDateString('fr-FR') %></p>
+          </td>
+          <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm text-right">
+            <a href="/admin/posts/edit/<%= post._id %>" class="text-indigo-600 hover:text-indigo-900">Modifier</a>
+            <form action="/admin/posts/delete/<%= post._id %>?_method=DELETE" method="POST" class="inline-block ml-4">
+              <button type="submit" class="text-red-600 hover:text-red-900">Supprimer</button>
+            </form>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>

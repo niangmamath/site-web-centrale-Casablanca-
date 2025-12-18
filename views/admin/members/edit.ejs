@@ -1,0 +1,48 @@
+<h1 class="text-3xl font-bold mb-8">Modifier le Membre</h1>
+
+<form action="/admin/members/edit/<%= member._id %>?_method=PUT" method="POST" enctype="multipart/form-data" class="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow-md">
+
+  <!-- Champ Nom -->
+  <div class="mb-6">
+    <label for="name" class="block text-gray-700 text-sm font-bold mb-2">Nom Complet</label>
+    <input type="text" id="name" name="name" value="<%= member.name %>" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+  </div>
+
+  <!-- Champ Rôle -->
+  <div class="mb-6">
+    <label for="role" class="block text-gray-700 text-sm font-bold mb-2">Rôle</label>
+    <input type="text" id="role" name="role" value="<%= member.role %>" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+  </div>
+
+  <!-- Champ Biographie -->
+  <div class="mb-6">
+    <label for="bio" class="block text-gray-700 text-sm font-bold mb-2">Biographie (Description complète)</label>
+    <textarea id="bio" name="bio" rows="4" placeholder="Description détaillée pour la page du membre" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"><%= member.bio %></textarea>
+  </div>
+
+  <!-- Champ Lien LinkedIn -->
+  <div class="mb-6">
+    <label for="linkedinUrl" class="block text-gray-700 text-sm font-bold mb-2">URL du profil LinkedIn</label>
+    <input type="text" id="linkedinUrl" name="linkedinUrl" value="<%= member.linkedinUrl %>" placeholder="https://www.linkedin.com/in/votreprofil" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+  </div>
+
+  <!-- Champ Image -->
+  <div class="mb-8">
+    <label for="image" class="block text-gray-700 text-sm font-bold mb-2">Changer la photo de profil</label>
+    <input type="file" id="image" name="image" accept="image/*" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+    <p class="text-xs text-gray-500 mt-1">Téléchargez une nouvelle image pour mettre à jour la photo de profil actuelle.</p>
+    <% if (member.imageUrl) { %>
+      <div class="mt-4">
+        <p class="text-gray-600 font-semibold">Photo actuelle :</p>
+        <img src="<%= member.imageUrl %>" alt="Photo de <%= member.name %>" class="w-32 h-32 rounded-full object-cover mt-2 border-4 border-white shadow-md">
+      </div>
+    <% } %>
+  </div>
+
+  <!-- Boutons d'action -->
+  <div class="flex items-center justify-between">
+    <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Enregistrer les Modifications</button>
+    <a href="/admin/members" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Annuler</a>
+  </div>
+
+</form>

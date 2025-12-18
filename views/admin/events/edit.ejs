@@ -1,0 +1,33 @@
+<div class="container mx-auto p-8">
+    <h2 class="text-4xl font-bold text-gray-800 mb-8">Edit Event</h2>
+    <form action="/admin/events/edit/<%= event._id %>" method="POST" enctype="multipart/form-data" class="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
+        <div class="mb-6">
+            <label for="title" class="block text-gray-700 font-bold mb-2">Title</label>
+            <input type="text" id="title" name="title" value="<%= event.title %>" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+        </div>
+        <div class="mb-6">
+            <label for="date" class="block text-gray-700 font-bold mb-2">Date</label>
+            <input type="date" id="date" name="date" value="<%= event.date.toISOString().split('T')[0] %>" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+        </div>
+        <div class="mb-6">
+            <label for="location" class="block text-gray-700 font-bold mb-2">Location</label>
+            <input type="text" id="location" name="location" value="<%= event.location %>" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+        </div>
+        <div class="mb-6">
+            <label for="speaker" class="block text-gray-700 font-bold mb-2">Speaker (Optional)</label>
+            <input type="text" id="speaker" name="speaker" value="<%= event.speaker || '' %>" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+        <div class="mb-6">
+            <label for="image" class="block text-gray-700 font-bold mb-2">Image</label>
+            <input type="file" id="image" name="image" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <% if (event.imageUrl) { %>
+                <img src="<%= event.imageUrl %>" alt="Image for <%= event.title %>" class="mt-4 w-48 h-auto rounded-lg">
+            <% } %>
+        </div>
+        <div class="mb-6">
+            <label for="description" class="block text-gray-700 font-bold mb-2">Description</label>
+            <textarea id="description" name="description" rows="5" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required><%= event.description %></textarea>
+        </div>
+        <button type="submit" class="text-white font-bold py-3 px-6 rounded-full transition duration-300 bg-gradient-to-r from-blue-500 to-purple-600 hover:opacity-90 transform hover:scale-105">Update Event</button>
+    </form>
+</div>

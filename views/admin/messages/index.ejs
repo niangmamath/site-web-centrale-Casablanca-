@@ -1,0 +1,67 @@
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold text-gray-800 mb-6">Boîte de Réception</h1>
+
+    <% if (messages && messages.length > 0) { %>
+        <div class="bg-white shadow-md rounded-lg overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="min-w-full leading-normal">
+                    <thead>
+                        <tr>
+                            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                Statut
+                            </th>
+                            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                Expéditeur
+                            </th>
+                            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                Message
+                            </th>
+                            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                Reçu le
+                            </th>
+                            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% messages.forEach(function(message) { %>
+                            <tr class="<%= message.read ? 'bg-gray-50' : 'bg-yellow-50 font-bold' %>">
+                                <td class="px-5 py-5 border-b border-gray-200 text-sm">
+                                    <% if (message.read) { %>
+                                        <span class="text-gray-500">Lu</span>
+                                    <% } else { %>
+                                        <span class="text-yellow-600">Nouveau</span>
+                                    <% } %>
+                                </td>
+                                <td class="px-5 py-5 border-b border-gray-200 text-sm">
+                                    <p class="text-gray-900 whitespace-no-wrap"><%= message.name %></p>
+                                    <p class="text-gray-600 whitespace-no-wrap"><%= message.email %></p>
+                                </td>
+                                <td class="px-5 py-5 border-b border-gray-200 text-sm">
+                                    <p class="text-gray-900 whitespace-no-wrap"><%= message.message.substring(0, 50) %>...</p>
+                                </td>
+                                <td class="px-5 py-5 border-b border-gray-200 text-sm">
+                                    <p class="text-gray-900 whitespace-no-wrap"><%= new Date(message.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) %></p>
+                                </td>
+                                <td class="px-5 py-5 border-b border-gray-200 text-sm text-right">
+                                    <form action="/admin/messages/<%= message._id %>/toggle-read" method="POST" class="inline-block">
+                                        <button type="submit" class="text-sm font-semibold leading-6 text-indigo-600 hover:text-indigo-500">
+                                            <%= message.read ? 'Marquer comme non lu' : 'Marquer comme lu' %>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    <% } else { %>
+        <div class="text-center py-12">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            <h3 class="mt-2 text-sm font-semibold text-gray-900">Boîte de réception vide</h3>
+            <p class="mt-1 text-sm text-gray-500">Aucun message n'a été reçu pour le moment.</p>
+        </div>
+    <% } %>
+</div>

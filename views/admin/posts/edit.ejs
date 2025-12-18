@@ -1,0 +1,44 @@
+<h1 class="text-3xl font-bold mb-8">Modifier un Article</h1>
+
+<form action="/admin/posts/edit/<%= post._id %>?_method=PUT" method="POST" enctype="multipart/form-data" class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-md">
+
+  <div class="mb-6">
+    <label for="title" class="block text-gray-700 text-sm font-bold mb-2">Titre</label>
+    <input type="text" id="title" name="title" value="<%= post.title %>" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+  </div>
+
+  <div class="mb-6">
+    <label for="author" class="block text-gray-700 text-sm font-bold mb-2">Auteur</label>
+    <input type="text" id="author" name="author" value="<%= post.author %>" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+  </div>
+
+  <div class="mb-6">
+    <label for="content" class="block text-gray-700 text-sm font-bold mb-2">Contenu</label>
+    <textarea id="content" name="content" rows="20" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"><%= post.content %></textarea>
+  </div>
+
+  <div class="mb-8">
+    <label for="image" class="block text-gray-700 text-sm font-bold mb-2">Image</label>
+    <input type="file" id="image" name="image" accept="image/*" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+    <% if (post.imageUrl) { %>
+      <img src="<%= post.imageUrl %>" alt="Image actuelle" class="mt-4 w-48 rounded-lg">
+      <input type="hidden" name="existingImageUrl" value="<%= post.imageUrl %>">
+    <% } %>
+  </div>
+
+  <div class="flex items-center justify-between">
+    <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Enregistrer les Modifications</button>
+    <a href="/admin/posts" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Annuler</a>
+  </div>
+
+</form>
+
+<!-- TinyMCE Script -->
+<script src="https://cdn.tiny.cloud/1/<%= tinymceApiKey %>/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+<script>
+  tinymce.init({
+    selector: 'textarea#content',
+    plugins: 'anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount',
+    toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table | align lineheight | numlist bullist indent outdent | emoticons charmap | removeformat',
+  });
+</script>

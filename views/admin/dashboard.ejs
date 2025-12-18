@@ -1,0 +1,64 @@
+<div class="container mx-auto p-8">
+    <div class="flex justify-between items-center mb-8">
+        <h2 class="text-4xl font-bold text-gray-800">Admin Dashboard</h2>
+        <a href="/" class="text-white font-bold py-2 px-4 rounded-full transition duration-300 bg-gradient-to-r from-blue-500 to-purple-600 hover:opacity-90 transform hover:scale-105">Retour à l'accueil</a>
+    </div>
+
+    <!-- Statistics Section -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <!-- Messages Card -->
+        <a href="/admin/messages" class="bg-white p-6 rounded-xl shadow-md border border-gray-100 hover:shadow-lg transition-shadow duration-300 relative">
+            <% if (typeof unreadMessageCount !== 'undefined' && unreadMessageCount > 0) { %>
+                <span class="absolute top-0 right-0 -mt-2 -mr-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white"><%= unreadMessageCount %></span>
+            <% } %>
+            <div class="flex items-center">
+                <div class="text-3xl text-purple-500 mr-4">&#9993;</div> <!-- Icon: Envelope -->
+                <div>
+                    <p class="text-xl font-semibold text-gray-700">Messages Reçus</p>
+                    <p class="text-2xl font-bold text-gray-900"><%= typeof unreadMessageCount !== 'undefined' ? unreadMessageCount : 'N/A' %> non lus</p>
+                </div>
+            </div>
+        </a>
+        <!-- Blog Posts Card -->
+        <a href="/admin/posts" class="bg-white p-6 rounded-xl shadow-md border border-gray-100 hover:shadow-lg transition-shadow duration-300">
+            <div class="flex items-center">
+                <div class="text-3xl text-blue-500 mr-4">&#128221;</div> <!-- Icon: Memo -->
+                <div>
+                    <p class="text-xl font-semibold text-gray-700">Articles de Blog</p>
+                    <p class="text-2xl font-bold text-gray-900"><%= postCount %></p>
+                </div>
+            </div>
+        </a>
+        <!-- Events Card -->
+        <a href="/admin/events" class="bg-white p-6 rounded-xl shadow-md border border-gray-100 hover:shadow-lg transition-shadow duration-300">
+            <div class="flex items-center">
+                <div class="text-3xl text-green-500 mr-4">&#128197;</div> <!-- Icon: Calendar -->
+                <div>
+                    <p class="text-xl font-semibold text-gray-700">Événements</p>
+                    <p class="text-2xl font-bold text-gray-900"><%= eventCount %></p>
+                </div>
+            </div>
+        </a>
+        <!-- Team Members Card -->
+        <a href="/admin/members" class="bg-white p-6 rounded-xl shadow-md border border-gray-100 hover:shadow-lg transition-shadow duration-300">
+            <div class="flex items-center">
+                <div class="text-3xl text-yellow-500 mr-4">&#128101;</div> <!-- Icon: Busts in Silhouette -->
+                <div>
+                    <p class="text-xl font-semibold text-gray-700">Membres de l'Équipe</p>
+                    <p class="text-2xl font-bold text-gray-900"><%= memberCount %></p>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
+        <h3 class="text-2xl font-bold text-gray-800 mb-4">Accès Rapides</h3>
+        <div class="flex flex-wrap gap-4">
+            <a href="/admin/messages" class="inline-block text-white font-bold py-3 px-6 rounded-full transition duration-300 bg-gradient-to-r from-purple-500 to-pink-500 hover:opacity-90 transform hover:scale-105">Voir les Messages</a>
+            <a href="/admin/sections" class="inline-block text-white font-bold py-3 px-6 rounded-full transition duration-300 bg-gradient-to-r from-indigo-500 to-purple-600 hover:opacity-90 transform hover:scale-105">Gérer les Sections</a>
+            <a href="/admin/posts" class="inline-block text-white font-bold py-3 px-6 rounded-full transition duration-300 bg-gradient-to-r from-blue-500 to-teal-500 hover:opacity-90 transform hover:scale-105">Gérer le Blog</a>
+            <a href="/admin/events" class="inline-block text-white font-bold py-3 px-6 rounded-full transition duration-300 bg-gradient-to-r from-green-500 to-lime-600 hover:opacity-90 transform hover:scale-105">Gérer les Événements</a>
+            <a href="/admin/members" class="inline-block text-white font-bold py-3 px-6 rounded-full transition duration-300 bg-gradient-to-r from-yellow-500 to-orange-500 hover:opacity-90 transform hover:scale-105">Gérer l'Équipe</a>
+        </div>
+    </div>
+</div>

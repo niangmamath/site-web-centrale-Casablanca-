@@ -1,0 +1,24 @@
+<div class="container mx-auto p-8">
+    <h2 class="text-4xl font-bold text-center mb-8 text-gray-800">Ajouter une Nouvelle Section</h2>
+    <form action="/admin/sections/add" method="POST" class="max-w-xl mx-auto bg-white p-8 rounded-xl shadow-sm border border-gray-100">
+        <div class="mb-6">
+            <label for="title" class="block text-gray-700 font-bold mb-2">Titre</label>
+            <input type="text" id="title" name="title" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+        <div class="mb-6">
+            <label for="content" class="block text-gray-700 font-bold mb-2">Contenu</label>
+            <textarea id="content" name="content" required rows="6" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+        </div>
+        <div class="mb-6">
+            <label for="page" class="block text-gray-700 font-bold mb-2">Page</label>
+            <select id="page" name="page" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="home">Accueil</option>
+                <option value="team">Équipe</option>
+                <option value="events">Événements</option>
+            </select>
+        </div>
+        <div class="text-center">
+            <button type="submit" class="text-white font-bold py-3 px-8 rounded-full transition duration-300 bg-gradient-to-r from-blue-500 to-purple-600 hover:opacity-90 transform hover:scale-105">Ajouter la Section</button>
+        </div>
+    </form>
+</div>

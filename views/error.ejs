@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        h1 { color: #c0392b; }
+        pre { background-color: #f1f1f1; padding: 15px; border-radius: 5px; white-space: pre-wrap; word-wrap: break-word; }
+    </style>
+</head>
+<body>
+    <h1>Error Details</h1>
+    <% if (locals.message) { %>
+        <h2><%= message %></h2>
+    <% } %>
+    <% if (locals.error) { %>
+        <p>Status: <%= error.status %></p>
+        <pre><%= error.stack %></pre>
+    <% } else { %>
+        <p>An unknown error occurred.</p>
+    <% } %>
+</body>
+</html>

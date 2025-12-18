@@ -2,18 +2,36 @@
   "name": "node-express-web",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "app.js",
   "scripts": {
-    "dev": "nodemon index.js",
-    "start": "node index.js"
+    "build:css": "npx tailwindcss -i ./public/styles.css -o ./dist/styles.css",
+    "dev": "kill-port 3002 && concurrently \"npx tailwindcss -i ./public/styles.css -o ./dist/styles.css --watch\" \"nodemon app.js\"",
+    "start": "npm run build:css && node app.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "cloudinary": "^2.8.0",
+    "concurrently": "^8.2.2",
+    "connect-mongo": "^6.0.0",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^17.2.3",
     "ejs": "^3.1.9",
-    "express": "^4.21.2"
+    "express": "^4.19.2",
+    "express-ejs-layouts": "^2.5.1",
+    "express-session": "^1.18.2",
+    "method-override": "^3.0.0",
+    "mongoose": "^8.20.3",
+    "morgan": "^1.10.1",
+    "multer": "^2.0.2",
+    "multer-storage-cloudinary": "^2.2.1",
+    "streamifier": "^0.1.1",
+    "tailwindcss": "^3.4.4"
   },
   "devDependencies": {
-    "nodemon": "^3.0.1"
+    "autoprefixer": "^10.4.19",
+    "kill-port": "^2.0.1",
+    "nodemon": "^3.1.11",
+    "postcss": "^8.4.38"
   }
 }

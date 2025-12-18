@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - Centrale Quanta</title>
+  <link rel="stylesheet" href="/dist/styles.css">
+</head>
+<body class="bg-gray-50 text-gray-800">
+  
+
+  <main class="container mx-auto p-4 my-12">
+    <div class="flex flex-col lg:flex-row gap-12">
+
+      <!-- Main post content -->
+      <div class="lg:w-3/4">
+        <article>
+          <img src="<%= post.imageUrl %>" alt="Image pour <%= post.title %>" class="rounded-2xl mb-8 w-full object-cover shadow-lg" style="max-height: 500px;">
+          <h1 class="text-4xl md:text-5xl font-extrabold mb-4 text-gray-900 tracking-tight"><%= post.title %></h1>
+          <p class="text-gray-500 mb-6">Par <%= post.author %> - Le <%= new Date(post.createdAt).toLocaleDateString('fr-FR') %></p>
+          <div class="prose prose-lg max-w-none text-gray-700 leading-relaxed">
+            <%- post.content %>
+          </div>
+        </article>
+      </div>
+
+      <!-- Sidebar with recent posts -->
+      <aside class="lg:w-1/4 lg:sticky top-24 self-start">
+        <h2 class="text-2xl font-bold mb-6 border-b pb-3">Autres articles</h2>
+        <div class="space-y-6">
+          <% recentPosts.forEach(recentPost => { %>
+            <a href="/blog/<%= recentPost._id %>" class="flex items-center gap-4 group">
+              <img src="<%= recentPost.imageUrl %>" alt="" class="w-20 h-20 rounded-lg object-cover flex-shrink-0">
+              <div>
+                <h3 class="font-semibold text-gray-800 group-hover:text-blue-500 transition-colors"><%= recentPost.title %></h3>
+                <p class="text-sm text-gray-500"><%= new Date(recentPost.createdAt).toLocaleDateString('fr-FR') %></p>
+              </div>
+            </a>
+          <% }) %>
+        </div>
+      </aside>
+
+    </div>
+  </main>
+
+  <%- include('partials/footer') %>
+</body>
+</html>
