@@ -16,7 +16,7 @@
                     <h3 class="text-2xl font-bold text-gray-800 mb-2">
                         <a href="/blog/<%= post._id %>" class="hover:text-blue-500 transition-colors"><%= post.title %></a>
                     </h3>
-                    <p class="text-gray-600 mb-4"><%= post.content.substring(0, 150) %>...</p>
+                    <div class="text-gray-600 mb-4"><%- post.content.replace(/<[^>]*>/g, '').substring(0, 150) %>...</div>
                     <a href="/blog/<%= post._id %>" class="text-blue-500 font-semibold hover:underline">Lire la suite</a>
                 </div>
             </div>

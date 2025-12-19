@@ -9,7 +9,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 const uploadToCloudinary = (fileBuffer) => {
   return new Promise((resolve, reject) => {
-    const uploadStream = cloudinary.uploader.upload_stream(
+    const uploadStream = cloudinary.v2.uploader.upload_stream(
       { folder: 'team' },
       (error, result) => {
         if (error) reject(error);

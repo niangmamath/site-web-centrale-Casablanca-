@@ -2,28 +2,25 @@ const express = require('express');
 const router = express.Router();
 const Post = require('../../models/post');
 const multer = require('multer');
-const CloudinaryStorage = require('multer-storage-cloudinary');
-const cloudinary = require('cloudinary').v2;
-require('dotenv').config();
+const streamifier = require('streamifier');
+const cloudinary = require('../../config/cloudinary');
 
-// Cloudinary configuration
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
-});
+// Configure Multer to store files in memory, like in other routes
+const upload = multer({ storage: multer.memoryStorage() });
 
-// Multer and Cloudinary storage configuration
-const storage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: {
-    folder: 'blog-images',
-    allowed_formats: ['jpg', 'png', 'jpeg'],
-    public_id: (req, file) => 'post-' + Date.now() + '-' + file.originalname
-  }
-});
-
-const upload = multer({ storage: storage });
+// Helper function to upload a buffer to Cloudinary, consistent with other routes
+const uploadToCloudinary = (fileBuffer) => {
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.v2.uploader.upload_stream(
+      { folder: 'blog-images' },
+      (error, result) => {
+        if (error) reject(error);
+        else resolve(result);
+      }
+    );
+    streamifier.createReadStream(fileBuffer).pipe(uploadStream);
+  });
+};
 
 // Display all posts
 router.get('/', async (req, res) => {
@@ -41,18 +38,18 @@ router.get('/add', (req, res) => {
   res.render('admin/posts/add', { tinymceApiKey: process.env.TINYMCE_API_KEY, title: 'Ajouter un article' });
 });
 
-// Add a new post
+// Add a new post using the new upload logic
 router.post('/add', upload.single('image'), async (req, res) => {
-  const { title, content, author } = req.body;
-  const imageUrl = req.file ? req.file.path : ''; 
-
   try {
-    const newPost = new Post({
-      title,
-      content,
-      author,
-      imageUrl
-    });
+    const { title, content, author } = req.body;
+    let imageUrl = ''; 
+
+    if (req.file) {
+      const result = await uploadToCloudinary(req.file.buffer);
+      imageUrl = result.secure_url; // Use the secure URL from Cloudinary
+    }
+
+    const newPost = new Post({ title, content, author, imageUrl });
     await newPost.save();
     res.redirect(`${res.locals.adminPath}/posts`);
   } catch (err) {
@@ -72,22 +69,22 @@ router.get('/edit/:id', async (req, res) => {
   }
 });
 
-// Edit a post
+// Edit a post using the new upload logic
 router.put('/edit/:id', upload.single('image'), async (req, res) => {
   try {
     const { title, content, author } = req.body;
-    let imageUrl = req.body.existingImageUrl;
+    let imageUrl;
 
     if (req.file) {
-      imageUrl = req.file.path;
+      const result = await uploadToCloudinary(req.file.buffer);
+      imageUrl = result.secure_url;
+    } else {
+      // Keep existing image if no new one is uploaded
+      const post = await Post.findById(req.params.id);
+      imageUrl = post.imageUrl;
     }
 
-    await Post.findByIdAndUpdate(req.params.id, {
-      title,
-      content,
-      author,
-      imageUrl
-    });
+    await Post.findByIdAndUpdate(req.params.id, { title, content, author, imageUrl });
     res.redirect(`${res.locals.adminPath}/posts`);
   } catch (err) {
     console.error(err);
@@ -107,23 +104,17 @@ router.delete('/delete/:id', async (req, res) => {
 });
 
 // --- Comment Management ---
-
-// Delete a comment from a post
 router.delete('/:postId/comments/delete/:commentId', async (req, res) => {
   try {
     const { postId, commentId } = req.params;
     const post = await Post.findById(postId);
-    if (!post) {
-      return res.status(404).send('Post not found');
+    if (post) {
+      const comment = post.comments.id(commentId);
+      if (comment) {
+        comment.deleteOne();
+        await post.save();
+      }
     }
-
-    // Find the comment subdocument and remove it
-    const comment = post.comments.id(commentId);
-    if (comment) {
-      comment.deleteOne(); // Mongoose v6+
-      await post.save();
-    }
-    
     res.redirect(`${res.locals.adminPath}/posts/edit/${postId}`);
   } catch (err) {
     console.error('Error deleting comment:', err);
