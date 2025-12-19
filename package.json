@@ -4,9 +4,9 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "build:css": "npx tailwindcss -i ./public/styles.css -o ./dist/styles.css",
+    "build": "npx tailwindcss -i ./public/styles.css -o ./dist/styles.css",
     "dev": "kill-port 3002 && concurrently \"npx tailwindcss -i ./public/styles.css -o ./dist/styles.css --watch\" \"nodemon app.js\"",
-    "start": "npm run build:css && node app.js"
+    "start": "node app.js"
   },
   "author": "",
   "license": "ISC",
