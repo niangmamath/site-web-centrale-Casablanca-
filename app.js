@@ -28,6 +28,10 @@ const commentsRouter = require('./routes/admin/comments');
 
 const app = express();
 
+// Trust the first proxy in production
+// This is necessary for secure cookies to work behind Railway's reverse proxy
+app.set('trust proxy', 1);
+
 const adminPath = process.env.ADMIN_PATH || '/admin';
 
 mongoose.connect(process.env.MONGODB_URI)
