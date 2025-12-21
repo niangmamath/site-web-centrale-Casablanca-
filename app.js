@@ -36,6 +36,7 @@ app.set('trust proxy', 1);
 
 const adminPath = process.env.ADMIN_PATH || '/admin';
 
+mongoose.set('strictQuery', true);
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('MongoDB Connected'))
   .catch(err => console.log(err));
