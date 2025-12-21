@@ -86,7 +86,7 @@ router.post('/edit/:id', upload.single('image'), async (req, res) => {
 });
 
 // Admin: Handle deleting a member
-router.post('/delete/:id', async (req, res) => {
+router.delete('/delete/:id', async (req, res) => {
   try {
     await Member.findByIdAndDelete(req.params.id);
     res.redirect(`${res.locals.adminPath}/members`);

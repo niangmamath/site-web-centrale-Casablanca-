@@ -1,6 +1,7 @@
 <h1 class="text-3xl font-bold mb-8">Ajouter un Nouveau Membre</h1>
 
 <form action="<%= adminPath %>/members/add" method="POST" enctype="multipart/form-data" class="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow-md">
+<input type="hidden" name="_csrf" value="<%- csrfToken %>">
 
   <!-- Champ Nom -->
   <div class="mb-6">

@@ -37,6 +37,7 @@
           <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm text-right">
             <a href="<%= adminPath %>/posts/edit/<%= post._id %>" class="text-indigo-600 hover:text-indigo-900">Modifier</a>
             <form action="<%= adminPath %>/posts/delete/<%= post._id %>?_method=DELETE" method="POST" class="inline-block ml-4">
+              <input type="hidden" name="_csrf" value="<%- csrfToken %>">
               <button type="submit" class="text-red-600 hover:text-red-900">Supprimer</button>
             </form>
           </td>

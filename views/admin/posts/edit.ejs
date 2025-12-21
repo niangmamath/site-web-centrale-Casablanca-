@@ -1,6 +1,7 @@
 <h1 class="text-3xl font-bold mb-8">Modifier un Article</h1>
 
 <form action="<%= adminPath %>/posts/edit/<%= post._id %>?_method=PUT" method="POST" enctype="multipart/form-data" class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-md mb-12">
+<input type="hidden" name="_csrf" value="<%- csrfToken %>">
 
   <div class="mb-6">
     <label for="title" class="block text-gray-700 text-sm font-bold mb-2">Titre</label>
@@ -47,6 +48,7 @@
             <p class="text-gray-700"><%= comment.text %></p>
           </div>
           <form action="<%= adminPath %>/posts/<%= post._id %>/comments/delete/<%= comment._id %>?_method=DELETE" method="POST" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce commentaire ?');">
+            <input type="hidden" name="_csrf" value="<%- csrfToken %>">
             <button type="submit" class="text-red-500 hover:text-red-700 font-semibold">Supprimer</button>
           </form>
         </div>

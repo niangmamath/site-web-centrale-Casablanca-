@@ -1,5 +1,7 @@
 const express = require('express');
 const router = express.Router();
+const { body, validationResult } = require('express-validator');
+
 const Section = require('../models/section');
 const Event = require('../models/event');
 const Member = require('../models/member');
@@ -8,7 +10,6 @@ const Message = require('../models/message');
 
 // --- Blog Routes ---
 
-// Route pour la page du blog (liste des articles)
 router.get('/blog', async (req, res) => {
   try {
     const posts = await Post.find().sort({ createdAt: -1 });
@@ -19,31 +20,20 @@ router.get('/blog', async (req, res) => {
   }
 });
 
-// Route pour un article de blog individuel
 router.get('/blog/:id', async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
     if (!post) {
       return res.status(404).render('404', { layout: 'layout' });
     }
-    
-    const recentPosts = await Post.find({ _id: { $ne: req.params.id } })
-      .sort({ createdAt: -1 })
-      .limit(3);
-
-    res.render('post', { 
-      post, 
-      recentPosts, 
-      layout: 'layout', 
-      title: post.title 
-    });
+    const recentPosts = await Post.find({ _id: { $ne: req.params.id } }).sort({ createdAt: -1 }).limit(3);
+    res.render('post', { post, recentPosts, layout: 'layout', title: post.title });
   } catch (err) {
     console.error(err);
     res.status(500).send('Server Error');
   }
 });
 
-// Route to handle liking a post
 router.post('/blog/:id/like', async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
@@ -59,24 +49,34 @@ router.post('/blog/:id/like', async (req, res) => {
   }
 });
 
-// Route to handle commenting on a post
-router.post('/blog/:id/comment', async (req, res) => {
-  try {
-    const post = await Post.findById(req.params.id);
-    if (!post) {
-      return res.status(404).send('Post not found');
+router.post('/blog/:id/comment', 
+  [
+    body('user').trim().not().isEmpty().withMessage('Le nom est requis.').escape(),
+    body('text').trim().not().isEmpty().withMessage('Le commentaire ne peut être vide.').escape(),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      // For simplicity, redirecting. A better UX would re-render with errors.
+      return res.redirect(`/blog/${req.params.id}`);
     }
-    const { user, text } = req.body;
-    post.comments.push({ user, text });
-    await post.save();
-    res.redirect(`/blog/${req.params.id}`);
-  } catch (err) {
-    console.error('Error adding comment:', err);
-    res.status(500).send('Server Error');
+    try {
+      const post = await Post.findById(req.params.id);
+      if (!post) {
+        return res.status(404).send('Post not found');
+      }
+      const { user, text } = req.body; // Sanitized data
+      post.comments.push({ user, text });
+      await post.save();
+      res.redirect(`/blog/${req.params.id}`);
+    } catch (err) {
+      console.error('Error adding comment:', err);
+      res.status(500).send('Server Error');
+    }
   }
-});
+);
 
-// --- Other Routes (Home, Events, Team, Contact) ---
+// --- Other Routes ---
 
 router.get('/', async (req, res) => {
   try {
@@ -92,17 +92,10 @@ router.get('/events', async (req, res) => {
   try {
     const events = await Event.find().sort({ date: 1 }).lean();
     const sections = await Section.find({ page: 'events' });
-    
     events.forEach(event => {
       event.shareUrl = `${req.protocol}://${req.get('host')}/events#${event._id}`;
     });
-
-    res.render('events', { 
-      title: 'Nos Événements',
-      events, 
-      sections, 
-      layout: 'layout' 
-    });
+    res.render('events', { title: 'Nos Événements', events, sections, layout: 'layout' });
   } catch (err) {
     console.error(err);
     res.status(500).send('Server Error');
@@ -135,27 +128,34 @@ router.get('/team/:id', async (req, res) => {
 
 router.get('/contact', (req, res) => {
   try {
-    res.render('contact', { 
-      title: 'Contactez-nous', 
-      layout: 'layout',
-      status: req.query.status 
-    });
+    res.render('contact', { title: 'Contactez-nous', layout: 'layout', status: req.query.status });
   } catch (err) {
     console.error(err);
     res.status(500).send('Server Error');
   }
 });
 
-router.post('/contact', async (req, res) => {
-  try {
-    const { name, email, message } = req.body;
-    const newMessage = new Message({ name, email, message });
-    await newMessage.save();
-    res.redirect('/contact?status=success');
-  } catch (err) {
-    console.error('Error saving message:', err);
-    res.redirect('/contact?status=error');
+router.post('/contact', 
+  [
+    body('name').trim().not().isEmpty().withMessage('Le nom est requis.').escape(),
+    body('email').isEmail().withMessage('Email invalide.').normalizeEmail(),
+    body('message').trim().not().isEmpty().withMessage('Le message ne peut être vide.').escape(),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.redirect('/contact?status=error');
+    }
+    try {
+      const { name, email, message } = req.body; // Sanitized data
+      const newMessage = new Message({ name, email, message });
+      await newMessage.save();
+      res.redirect('/contact?status=success');
+    } catch (err) {
+      console.error('Error saving message:', err);
+      res.redirect('/contact?status=error');
+    }
   }
-});
+);
 
 module.exports = router;

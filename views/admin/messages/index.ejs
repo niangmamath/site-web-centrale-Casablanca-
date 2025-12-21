@@ -44,6 +44,7 @@
                                 </td>
                                 <td class="px-5 py-5 border-b border-gray-200 text-sm text-right">
                                     <form action="<%= adminPath %>/messages/<%= message._id %>/toggle-read" method="POST" class="inline-block">
+                                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                         <button type="submit" class="text-sm font-semibold leading-6 text-indigo-600 hover:text-indigo-500">
                                             <%= message.read ? 'Marquer comme non lu' : 'Marquer comme lu' %>
                                         </button>

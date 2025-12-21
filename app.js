@@ -11,6 +11,10 @@ const session = require('express-session');
 const MongoStore = require('connect-mongo');
 const expressLayouts = require('express-ejs-layouts');
 const methodOverride = require('method-override');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const bcrypt = require('bcrypt');
+const csurf = require('csurf');
 
 // Models
 const Message = require('./models/message');
@@ -28,8 +32,6 @@ const commentsRouter = require('./routes/admin/comments');
 
 const app = express();
 
-// Trust the first proxy in production
-// This is necessary for secure cookies to work behind Railway's reverse proxy
 app.set('trust proxy', 1);
 
 const adminPath = process.env.ADMIN_PATH || '/admin';
@@ -38,7 +40,32 @@ mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('MongoDB Connected'))
   .catch(err => console.log(err));
 
-// Middleware setup
+// Security Middleware
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+        "script-src": ["'self'", "https://cdn.tailwindcss.com", "'unsafe-inline'"],
+        "style-src": ["'self'", "https://cdnjs.cloudflare.com", "'unsafe-inline'"],
+        "font-src": ["'self'", "https://cdnjs.cloudflare.com"],
+        "img-src": ["'self'", "data:", "res.cloudinary.com"],
+      },
+    },
+  })
+);
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: 'Too many requests from this IP, please try again after 15 minutes',
+});
+app.use('/contact', apiLimiter);
+app.use('/blog/:id/comment', apiLimiter);
+app.post(`${adminPath}/login`, apiLimiter);
+
+// Core Middleware
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -47,7 +74,7 @@ app.use(express.static(path.join(__dirname, 'dist')));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(methodOverride('_method'));
 
-// Session configuration
+// Session Configuration
 app.use(session({
   secret: process.env.SESSION_SECRET,
   resave: false,
@@ -55,100 +82,109 @@ app.use(session({
   store: MongoStore.create({ mongoUrl: process.env.MONGODB_URI }),
   cookie: {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
-    maxAge: 1000 * 60 * 60 * 24 // 24 hours
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 1000 * 60 * 60 * 24
   }
 }));
 
-// Global middleware to make data available to all views
-app.use(async (req, res, next) => {
-  res.locals.adminPath = adminPath;
-  res.locals.user = req.session.user; // Pass user data to views
+// CSRF Protection Middleware - Must be after session
+const csrfProtection = csurf({ cookie: true });
 
-  // Calculate notifications only if the user is logged in and in the admin area
-  if (req.session.user && req.originalUrl.startsWith(adminPath)) {
-    try {
-      const unreadMessageCount = await Message.countDocuments({ read: false });
-      const unreadCommentsAggregation = await Post.aggregate([
-        { $unwind: '$comments' },
-        { $match: { 'comments.read': false } },
-        { $count: 'unread' }
-      ]);
-      res.locals.unreadMessageCount = unreadMessageCount;
-      res.locals.unreadCommentsCount = unreadCommentsAggregation.length > 0 ? unreadCommentsAggregation[0].unread : 0;
-    } catch (err) {
-      console.error("Error counting unread items:", err);
-      res.locals.unreadMessageCount = 0;
-      res.locals.unreadCommentsCount = 0;
+// Global Middleware
+app.use(async (req, res, next) => {
+    res.locals.adminPath = adminPath;
+    res.locals.user = req.session.user;
+    if (req.session.user && req.originalUrl.startsWith(adminPath)) {
+        try {
+            const unreadMessageCount = await Message.countDocuments({ read: false });
+            const unreadCommentsAggregation = await Post.aggregate([
+                { $unwind: '$comments' },
+                { $match: { 'comments.read': false } },
+                { $count: 'unread' }
+            ]);
+            res.locals.unreadMessageCount = unreadMessageCount;
+            res.locals.unreadCommentsCount = unreadCommentsAggregation.length > 0 ? unreadCommentsAggregation[0].unread : 0;
+        } catch (err) {
+            console.error("Error counting unread items:", err);
+            res.locals.unreadMessageCount = 0;
+            res.locals.unreadCommentsCount = 0;
+        }
+    } else {
+        res.locals.unreadMessageCount = 0;
+        res.locals.unreadCommentsCount = 0;
     }
-  } else {
-    // Default values for non-admin or non-logged-in users
-    res.locals.unreadMessageCount = 0;
-    res.locals.unreadCommentsCount = 0;
-  }
-  next();
+    next();
 });
 
-// View engine setup
+// View Engine
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 app.use(expressLayouts);
 
-
 // --- AUTHENTICATION & ADMIN ROUTING ---
 
-// 1. Public Admin Routes (Login/Logout)
-// These routes do not require authentication and use a specific layout.
+const requireLogin = (req, res, next) => {
+    if (!req.session.user) {
+        return res.redirect(`${adminPath}/login`);
+    }
+    next();
+};
 
+// Login routes are placed BEFORE CSRF protection is applied
 app.get(`${adminPath}/login`, (req, res) => {
-  req.app.set('layout', false); // No layout for the login page
+  req.app.set('layout', false);
   res.render('admin/login', { error: null, adminPath });
 });
 
-app.post(`${adminPath}/login`, (req, res) => {
-  const { username, password } = req.body;
-  const ADMIN_USER = process.env.ADMIN_USERNAME || 'admin';
-  const ADMIN_PASS = process.env.ADMIN_PASSWORD || '7X54M}VvDtmx2z{2&)(H';
+app.post(`${adminPath}/login`, async (req, res) => {
+    const { username, password } = req.body;
+    const ADMIN_USER = process.env.ADMIN_USERNAME || 'admin';
+    const ADMIN_PASS_HASH = process.env.ADMIN_PASSWORD_HASH;
 
-  if (username === ADMIN_USER && password === ADMIN_PASS) {
-    req.session.user = { username: ADMIN_USER };
-    res.redirect(adminPath);
-  } else {
-    req.app.set('layout', false);
-    res.render('admin/login', { error: 'Identifiants incorrects.', adminPath });
-  }
+    if (!ADMIN_PASS_HASH) {
+        console.error('FATAL: ADMIN_PASSWORD_HASH is not defined in .env file.');
+        req.app.set('layout', false);
+        return res.status(500).render('admin/login', { error: 'Configuration server error.', adminPath });
+    }
+
+    const isUserValid = (username === ADMIN_USER);
+    const isPasswordValid = await bcrypt.compare(password, ADMIN_PASS_HASH);
+
+    if (isUserValid && isPasswordValid) {
+        req.session.user = { username: ADMIN_USER };
+        // On successful login, redirect to a page that will have CSRF protection
+        res.redirect(adminPath);
+    } else {
+        req.app.set('layout', false);
+        res.render('admin/login', { error: 'Identifiants incorrects.', adminPath });
+    }
 });
 
 app.get(`${adminPath}/logout`, (req, res, next) => {
-  req.session.destroy((err) => {
-    if (err) {
-      console.error("Session destruction error:", err);
-      return next(err);
-    }
-    res.clearCookie('connect.sid'); // Default session cookie name
-    res.redirect(`${adminPath}/login`);
-  });
+    req.session.destroy((err) => {
+        if (err) {
+            console.error("Session destruction error:", err);
+            return next(err);
+        }
+        res.clearCookie('connect.sid'); // Default cookie name
+        res.redirect(`${adminPath}/login`);
+    });
 });
 
-// 2. Authentication Middleware
-// This function checks if a user is logged in. If not, it redirects to the login page.
-const requireLogin = (req, res, next) => {
-  if (!req.session.user) {
-    return res.redirect(`${adminPath}/login`);
-  }
-  next();
-};
-
-// 3. Protected Admin Router
-// All routes for the admin dashboard are grouped here and protected by the requireLogin middleware.
+// Protected Admin Router
 const protectedAdminRouter = express.Router();
-protectedAdminRouter.use(requireLogin); // Authentication wall
+protectedAdminRouter.use(requireLogin);
+protectedAdminRouter.use(csrfProtection); // Apply CSRF protection to all subsequent routes
+protectedAdminRouter.use((req, res, next) => { // Middleware to make CSRF token available to all admin views
+  res.locals.csrfToken = req.csrfToken();
+  next();
+});
 protectedAdminRouter.use((req, res, next) => {
-  req.app.set('layout', 'admin/layout'); // Use the admin layout for all these routes
+  req.app.set('layout', 'admin/layout');
   next();
 });
 
-// Mount all the individual admin controllers onto the protected router
+// Attach admin sub-routers
 protectedAdminRouter.use('/', adminRouter);
 protectedAdminRouter.use('/posts', postsRouter);
 protectedAdminRouter.use('/sections', sectionsRouter);
@@ -157,34 +193,47 @@ protectedAdminRouter.use('/events', eventsRouter);
 protectedAdminRouter.use('/members', membersRouter);
 protectedAdminRouter.use('/comments', commentsRouter);
 
-// 4. Main Application Routing
+// --- MAIN ROUTING ---
+
 app.use((req, res, next) => {
-  // Set the default public layout for all non-admin routes
   if (!req.originalUrl.startsWith(adminPath)) {
     req.app.set('layout', 'layout');
   }
   next();
 });
-
-// Mount the public-facing router
 app.use('/', indexRouter);
-
-// Mount the entire protected admin section under its secure path
 app.use(adminPath, protectedAdminRouter);
 
-// --- Error Handlers ---
+// --- ERROR HANDLERS ---
+
+// Catch 404 and forward to error handler
 app.use((req, res, next) => {
   next(createError(404));
 });
 
+// Custom CSRF Error Handler
+app.use((err, req, res, next) => {
+  if (err.code === 'EBADCSRFTOKEN') {
+    res.status(403);
+    res.render('error', {
+      message: 'Action non autorisée. Jeton de sécurité invalide ou manquant.',
+      error: req.app.get('env') === 'development' ? err : {},
+      layout: false
+    });
+  } else {
+    next(err);
+  }
+});
+
+// General Error Handler
 app.use((err, req, res, next) => {
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
   res.status(err.status || 500);
-  res.render('error', { layout: false }); // Render error page without layout
+  res.render('error', { layout: false });
 });
 
-// Start the server
+// Start Server
 const PORT = process.env.PORT || 3002;
 app.listen(PORT, () => {
   console.log(`🚀 Site principal disponible sur : http://localhost:${PORT}`);
