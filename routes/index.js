@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const { body, validationResult } = require('express-validator');
+const { SitemapStream } = require('sitemap');
+const { Readable } = require('stream');
 
 const Section = require('../models/section');
 const Event = require('../models/event');
@@ -13,7 +15,10 @@ const Message = require('../models/message');
 router.get('/blog', async (req, res) => {
   try {
     const posts = await Post.find().sort({ createdAt: -1 });
-    res.render('blog', { posts, layout: 'layout', title: 'Blog' });
+    const og = {
+      description: 'Découvrez les derniers articles de notre blog sur l\'informatique quantique, les événements et les projets du club Centrale Quanta.'
+    };
+    res.render('blog', { posts, layout: 'layout', title: 'Blog', og });
   } catch (err) {
     console.error(err);
     res.status(500).send('Server Error');
@@ -27,7 +32,16 @@ router.get('/blog/:id', async (req, res) => {
       return res.status(404).render('404', { layout: 'layout' });
     }
     const recentPosts = await Post.find({ _id: { $ne: req.params.id } }).sort({ createdAt: -1 }).limit(3);
-    res.render('post', { post, recentPosts, layout: 'layout', title: post.title });
+    
+    // SEO enhancements
+    const og = {
+      title: post.title,
+      description: post.content.substring(0, 200).replace(/<[^>]*>/g, '').trim(),
+      image: post.coverImage,
+      url: `${req.protocol}://${req.get('host')}/blog/${post._id}`
+    };
+
+    res.render('post', { post, recentPosts, layout: 'layout', title: post.title, og });
   } catch (err) {
     console.error(err);
     res.status(500).send('Server Error');
@@ -95,7 +109,10 @@ router.get('/events', async (req, res) => {
     events.forEach(event => {
       event.shareUrl = `${req.protocol}://${req.get('host')}/events#${event._id}`;
     });
-    res.render('events', { title: 'Nos Événements', events, sections, layout: 'layout' });
+    const og = {
+      description: 'Participez à nos prochains ateliers, séminaires et conférences sur l\'informatique quantique. Restez informé des dernières activités de Centrale Quanta.'
+    };
+    res.render('events', { title: 'Nos Événements', events, sections, layout: 'layout', og });
   } catch (err) {
     console.error(err);
     res.status(500).send('Server Error');
@@ -106,7 +123,10 @@ router.get('/team', async (req, res) => {
   try {
     const members = await Member.find().select('name role imageUrl linkedinUrl');
     const sections = await Section.find({ page: 'team' });
-    res.render('team', { title: 'Notre Équipe', members, sections, layout: 'layout' });
+    const og = {
+      description: 'Rencontrez l\'équipe de Centrale Quanta, des étudiants passionnés par l\'informatique quantique et dédiés à la promotion de cette technologie.'
+    };
+    res.render('team', { title: 'Notre Équipe', members, sections, layout: 'layout', og });
   } catch (err) {
     console.error(err);
     res.status(500).send('Server Error');
@@ -119,7 +139,13 @@ router.get('/team/:id', async (req, res) => {
     if (!member) {
       return res.status(404).render('404', { layout: 'layout' });
     }
-    res.render('member-detail', { title: member.name, member, layout: 'layout' });
+    const og = {
+      title: member.name,
+      description: member.bio || 'Membre de l\'équipe Centrale Quanta.',
+      image: member.imageUrl,
+      url: `${req.protocol}://${req.get('host')}/team/${member._id}`
+    };
+    res.render('member-detail', { title: member.name, member, layout: 'layout', og });
   } catch (err) {
     console.error(err);
     res.status(500).send('Server Error');
@@ -128,7 +154,10 @@ router.get('/team/:id', async (req, res) => {
 
 router.get('/contact', (req, res) => {
   try {
-    res.render('contact', { title: 'Contactez-nous', layout: 'layout', status: req.query.status });
+    const og = {
+      description: 'Contactez Centrale Quanta pour toute question, proposition de collaboration ou pour rejoindre notre communauté d\'innovateurs en informatique quantique.'
+    };
+    res.render('contact', { title: 'Contactez-nous', layout: 'layout', status: req.query.status, og });
   } catch (err) {
     console.error(err);
     res.status(500).send('Server Error');
@@ -157,5 +186,51 @@ router.post('/contact',
     }
   }
 );
+
+// Sitemap Generation
+router.get('/sitemap.xml', async (req, res) => {
+  try {
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const links = [
+      { url: '/', changefreq: 'daily', priority: 1.0 },
+      { url: '/blog', changefreq: 'weekly', priority: 0.8 },
+      { url: '/events', changefreq: 'monthly', priority: 0.7 },
+      { url: '/team', changefreq: 'monthly', priority: 0.6 },
+      { url: '/contact', changefreq: 'yearly', priority: 0.5 },
+    ];
+
+    const posts = await Post.find().select('_id updatedAt').sort({ createdAt: -1 });
+    posts.forEach(post => {
+      links.push({
+        url: `/blog/${post._id}`,
+        lastmod: post.updatedAt,
+        changefreq: 'weekly',
+        priority: 0.9
+      });
+    });
+    
+    const members = await Member.find().select('_id');
+    members.forEach(member => {
+        links.push({
+            url: `/team/${member._id}`,
+            changefreq: 'monthly',
+            priority: 0.6
+        });
+    });
+
+    const stream = new SitemapStream({ hostname: baseUrl });
+
+    res.writeHead(200, {
+      'Content-Type': 'application/xml',
+    });
+
+    const readableStream = Readable.from(links);
+    readableStream.pipe(stream).pipe(res);
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).end();
+  }
+});
 
 module.exports = router;

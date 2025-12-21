@@ -29,6 +29,7 @@
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
     "postcss": "^8.4.5",
+    "sitemap": "^8.0.2",
     "streamifier": "^0.1.1",
     "tailwindcss": "^3.0.12"
   },
