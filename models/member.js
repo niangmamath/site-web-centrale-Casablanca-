@@ -11,6 +11,11 @@ const memberSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+  year: {
+    type: String,
+    required: true,
+    trim: true
+  },
   bio: {
     type: String
   },

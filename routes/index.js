@@ -96,9 +96,23 @@ router.get('/events', asyncHandler(async (req, res) => {
 }));
 
 router.get('/team', asyncHandler(async (req, res) => {
-  const members = await Member.find().select('name role imageUrl linkedinUrl');
+  const members = await Member.find().sort({ year: -1 }); // Sort by year descending
   const sections = await Section.find({ page: 'team' });
-  renderPage(req, res, 'team', 'Notre Équipe', { members, sections, og: { description: 'Rencontrez l\'équipe de Centrale Quanta, des étudiants passionnés par l\'informatique quantique.' } });
+
+  // Group members by year
+  const membersByYear = members.reduce((acc, member) => {
+    if (!acc[member.year]) {
+      acc[member.year] = [];
+    }
+    acc[member.year].push(member);
+    return acc;
+  }, {});
+
+  renderPage(req, res, 'team', 'Notre Équipe', { 
+    membersByYear, 
+    sections, 
+    og: { description: 'Rencontrez les différentes équipes de Centrale Casablanca au fil des années.' } 
+  });
 }));
 
 router.get('/team/:id', asyncHandler(async (req, res) => {
@@ -107,7 +121,7 @@ router.get('/team/:id', asyncHandler(async (req, res) => {
   
   const og = {
     title: member.name,
-    description: member.bio || 'Membre de l\'équipe Centrale Quanta.',
+    description: member.bio || 'Membre de l\'équipe Centrale Casablanca.',
     image: member.imageUrl,
     url: `${req.protocol}://${req.get('host')}/team/${member._id}`
   };
@@ -117,7 +131,7 @@ router.get('/team/:id', asyncHandler(async (req, res) => {
 router.get('/contact', (req, res) => {
   renderPage(req, res, 'contact', 'Contactez-nous', { 
     status: req.query.status, 
-    og: { description: 'Contactez Centrale Quanta pour toute question, proposition de collaboration ou pour rejoindre notre communauté.' } 
+    og: { description: 'Contactez Centrale Casablanca pour toute question, proposition de collaboration ou pour rejoindre notre communauté.' } 
   });
 });
 

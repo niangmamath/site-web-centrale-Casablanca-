@@ -39,15 +39,13 @@ const createCrudRouter = (Model, { viewPath, routePath, fields, uploadOptions })
   }));
 
   const renderAddForm = (req, res) => {
-    const action = `${res.locals.adminPath}/${routePath}/add`;
-    const renderData = {
+    res.render(`admin/${viewPath}/add`, {
       title: `Ajouter un ${singularName}`,
-      action,
-      tinymceApiKey: process.env.TINYMCE_API_KEY, // CORRIGÉ : Assurer que la clé est passée
+      action: `${res.locals.adminPath}/${routePath}/add`,
+      item: {},
+      tinymceApiKey: process.env.TINYMCE_API_KEY,
       layout: './admin/layout'
-    };
-    renderData[singularName] = {};
-    res.render(`admin/${viewPath}/add`, renderData);
+    });
   };
 
   router.get('/add', csrfProtection, addCsrfTokenToLocals, renderAddForm);
@@ -55,15 +53,13 @@ const createCrudRouter = (Model, { viewPath, routePath, fields, uploadOptions })
 
   router.get('/edit/:id', csrfProtection, addCsrfTokenToLocals, asyncHandler(async (req, res) => {
     const item = await Model.findById(req.params.id);
-    const action = `${res.locals.adminPath}/${routePath}/edit/${item._id}?_method=PUT`;
-    const renderData = {
+    res.render(`admin/${viewPath}/edit`, {
       title: `Modifier un ${singularName}`,
-      action,
-      tinymceApiKey: process.env.TINYMCE_API_KEY, // CORRIGÉ : Assurer que la clé est passée
+      action: `${res.locals.adminPath}/${routePath}/edit/${item._id}?_method=PUT`,
+      item,
+      tinymceApiKey: process.env.TINYMCE_API_KEY,
       layout: './admin/layout'
-    };
-    renderData[singularName] = item;
-    res.render(`admin/${viewPath}/edit`, renderData);
+    });
   }));
 
   const uploadMiddleware = uploadOptions ? upload.single(uploadOptions.fieldName) : (req, res, next) => next();
