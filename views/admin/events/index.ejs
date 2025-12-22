@@ -18,14 +18,14 @@
                 </tr>
             </thead>
             <tbody>
-                <% events.forEach(event => { %>
+                <% items.forEach(item => { %>
                     <tr class="border-b hover:bg-gray-50">
-                        <td class="py-4 px-4"><%= event.title %></td>
-                        <td class="py-4 px-4"><%= event.date.toDateString() %></td>
-                        <td class="py-4 px-4"><%= event.location %></td>
+                        <td class="py-4 px-4"><%= item.title %></td>
+                        <td class="py-4 px-4"><%= item.date.toDateString() %></td>
+                        <td class="py-4 px-4"><%= item.location %></td>
                         <td class="py-4 px-4">
-                            <a href="<%= adminPath %>/events/edit/<%= event._id %>" class="text-blue-600 hover:underline mr-4">Edit</a>
-                            <form action="<%= adminPath %>/events/delete/<%= event._id %>?_method=DELETE" method="POST" style="display:inline;">
+                            <a href="<%= adminPath %>/events/edit/<%= item._id %>" class="text-blue-600 hover:underline mr-4">Edit</a>
+                            <form action="<%= adminPath %>/events/delete/<%= item._id %>?_method=DELETE" method="POST" style="display:inline;">
                                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                 <button type="submit" class="text-red-600 hover:underline">Delete</button>
                             </form>

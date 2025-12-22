@@ -18,25 +18,25 @@
       </tr>
     </thead>
     <tbody>
-      <% posts.forEach(post => { %>
+      <% items.forEach(item => { %>
         <tr>
           <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-            <p class="text-gray-900 whitespace-no-wrap"><%= post.title %></p>
+            <p class="text-gray-900 whitespace-no-wrap"><%= item.title %></p>
           </td>
           <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-            <p class="text-gray-900 whitespace-no-wrap"><%= post.author %></p>
+            <p class="text-gray-900 whitespace-no-wrap"><%= item.author %></p>
           </td>
           <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm text-center">
             <span class="inline-block bg-gray-200 rounded-full px-3 py-1 text-sm font-semibold text-gray-700">
-              <%= post.comments.length %>
+              <%= item.comments.length %>
             </span>
           </td>
           <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-            <p class="text-gray-900 whitespace-no-wrap"><%= new Date(post.createdAt).toLocaleDateString('fr-FR') %></p>
+            <p class="text-gray-900 whitespace-no-wrap"><%= new Date(item.createdAt).toLocaleDateString('fr-FR') %></p>
           </td>
           <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm text-right">
-            <a href="<%= adminPath %>/posts/edit/<%= post._id %>" class="text-indigo-600 hover:text-indigo-900">Modifier</a>
-            <form action="<%= adminPath %>/posts/delete/<%= post._id %>?_method=DELETE" method="POST" class="inline-block ml-4">
+            <a href="<%= adminPath %>/posts/edit/<%= item._id %>" class="text-indigo-600 hover:text-indigo-900">Modifier</a>
+            <form action="<%= adminPath %>/posts/delete/<%= item._id %>?_method=DELETE" method="POST" class="inline-block ml-4">
               <input type="hidden" name="_csrf" value="<%- csrfToken %>">
               <button type="submit" class="text-red-600 hover:text-red-900">Supprimer</button>
             </form>

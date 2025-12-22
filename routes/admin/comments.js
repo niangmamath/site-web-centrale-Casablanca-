@@ -1,61 +1,71 @@
 const express = require('express');
 const router = express.Router();
+const csurf = require('csurf');
 const Post = require('../../models/post');
+const asyncHandler = require('../../utils/asyncHandler');
+const mongoose = require('mongoose');
 
-// --- Centralized Comment Management ---
+const csrfProtection = csurf({ cookie: true });
 
-// Display all unread comments
-router.get('/', async (req, res) => {
-  try {
-    // Find all posts that have at least one unread comment
-    const postsWithUnreadComments = await Post.find({ 'comments.read': false }).sort({ createdAt: -1 });
+router.use(csrfProtection);
 
-    let unreadComments = [];
-    postsWithUnreadComments.forEach(post => {
-      // Filter only unread comments and add post context
-      const commentsToAdd = post.comments
-        .filter(comment => !comment.read)
-        .map(comment => ({
-          ...comment.toObject(),
-          postId: post._id,
-          postTitle: post.title
-        }));
-      unreadComments = unreadComments.concat(commentsToAdd);
+// GET all comments
+router.get('/', asyncHandler(async (req, res) => {
+  const postsWithComments = await Post.find({ 'comments.0': { $exists: true } }).sort({ createdAt: -1 });
+
+  let allComments = [];
+  if (postsWithComments) {
+    postsWithComments.forEach(post => {
+      const commentsToAdd = post.comments.map(comment => ({
+        _id: comment._id,
+        author: comment.user,       // CORRIGÉ: Utilise le bon champ du modèle
+        content: comment.text,      // CORRIGÉ: Utilise le bon champ du modèle
+        createdAt: comment.date,    // CORRIGÉ: Utilise le bon champ du modèle
+        read: comment.read || false, // CORRIGÉ: Gère le nouveau champ
+        postId: post._id,
+        postTitle: post.title
+      }));
+      allComments.push(...commentsToAdd);
     });
-    
-    // Sort comments by creation date, descending
-    unreadComments.sort((a, b) => b.createdAt - a.createdAt);
-
-    res.render('admin/comments/index', { 
-      comments: unreadComments, 
-      title: 'Nouveaux Commentaires'
-    });
-
-  } catch (err) {
-    console.error('Error fetching unread comments:', err);
-    res.status(500).send('Server Error');
   }
-});
 
-// Mark a specific comment as read
-router.post('/:commentId/mark-read', async (req, res) => {
-    try {
-        const { commentId } = req.params;
-        
-        // This is a complex update. We need to find the post containing the comment.
-        await Post.updateOne(
-            { 'comments._id': commentId },
-            { $set: { 'comments.$.read': true } }
-        );
+  allComments.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-        // Redirect back to the comments page, which will now show one less comment.
-        res.redirect(req.headers.referer || '/admin/comments');
+  res.render('admin/comments/index', {
+    title: 'Gestion des Commentaires',
+    comments: allComments,
+    csrfToken: req.csrfToken(),
+    layout: './admin/layout'
+  });
+}));
 
-    } catch (err) {
-        console.error('Error marking comment as read:', err);
-        res.status(500).send('Server Error');
+// POST to toggle a comment's read status
+router.post('/:commentId/toggle-read', asyncHandler(async (req, res) => {
+    const { commentId } = req.params;
+    const post = await Post.findOne({ 'comments._id': new mongoose.Types.ObjectId(commentId) });
+
+    if (post) {
+        const comment = post.comments.id(new mongoose.Types.ObjectId(commentId));
+        if (comment) {
+            // La bascule fonctionne car `read` existe dans le schéma
+            const newReadStatus = !comment.read;
+            await Post.updateOne(
+                { 'comments._id': new mongoose.Types.ObjectId(commentId) },
+                { $set: { 'comments.$.read': newReadStatus } }
+            );
+        }
     }
-});
+    res.redirect(`${res.locals.adminPath}/comments`);
+}));
 
+// DELETE a comment
+router.post('/:commentId/delete', asyncHandler(async (req, res) => {
+    const { commentId } = req.params;
+    await Post.updateOne(
+        { 'comments._id': new mongoose.Types.ObjectId(commentId) },
+        { $pull: { comments: { _id: new mongoose.Types.ObjectId(commentId) } } }
+    );
+    res.redirect(`${res.locals.adminPath}/comments`);
+}));
 
 module.exports = router;

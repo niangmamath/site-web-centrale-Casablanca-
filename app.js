@@ -14,7 +14,6 @@ const methodOverride = require('method-override');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const bcrypt = require('bcrypt');
-const csurf = require('csurf');
 
 // Models
 const Message = require('./models/message');
@@ -23,10 +22,7 @@ const Post = require('./models/post');
 // Routers
 const indexRouter = require('./routes/index');
 const adminRouter = require('./routes/admin');
-const postsRouter = require('./routes/admin/posts');
-const membersRouter = require('./routes/admin/members');
 const sectionsRouter = require('./routes/admin/sections');
-const eventsRouter = require('./routes/admin/events');
 const messagesRouter = require('./routes/admin/messages');
 const commentsRouter = require('./routes/admin/comments');
 
@@ -47,8 +43,8 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         ...helmet.contentSecurityPolicy.getDefaultDirectives(),
-        "script-src": ["'self'", "https://cdn.tailwindcss.com", "'unsafe-inline'"],
-        "style-src": ["'self'", "https://cdnjs.cloudflare.com", "'unsafe-inline'"],
+        "script-src": ["'self'", "https://cdn.tailwindcss.com", "https://cdn.tiny.cloud", "'unsafe-inline'"], // CORRIGÉ : Ajout de cdn.tiny.cloud
+        "style-src": ["'self'", "https://cdnjs.cloudflare.com", "https://cdn.tiny.cloud", "'unsafe-inline'"],
         "font-src": ["'self'", "https://cdnjs.cloudflare.com"],
         "img-src": ["'self'", "data:", "res.cloudinary.com"],
       },
@@ -88,23 +84,25 @@ app.use(session({
   }
 }));
 
-// CSRF Protection Middleware - Must be after session
-const csrfProtection = csurf({ cookie: true });
-
-// Global Middleware
+// Global Middleware to count unread items
 app.use(async (req, res, next) => {
     res.locals.adminPath = adminPath;
     res.locals.user = req.session.user;
     if (req.session.user && req.originalUrl.startsWith(adminPath)) {
         try {
+            // Count unread messages (works perfectly)
             const unreadMessageCount = await Message.countDocuments({ read: false });
-            const unreadCommentsAggregation = await Post.aggregate([
+
+            // Correctly count unread comments using a robust aggregation pipeline
+            const unreadCommentsResult = await Post.aggregate([
                 { $unwind: '$comments' },
                 { $match: { 'comments.read': false } },
-                { $count: 'unread' }
+                { $count: 'totalUnread' }
             ]);
+
             res.locals.unreadMessageCount = unreadMessageCount;
-            res.locals.unreadCommentsCount = unreadCommentsAggregation.length > 0 ? unreadCommentsAggregation[0].unread : 0;
+            res.locals.unreadCommentsCount = unreadCommentsResult.length > 0 ? unreadCommentsResult[0].totalUnread : 0;
+
         } catch (err) {
             console.error("Error counting unread items:", err);
             res.locals.unreadMessageCount = 0;
@@ -116,6 +114,7 @@ app.use(async (req, res, next) => {
     }
     next();
 });
+
 
 // View Engine
 app.set('views', path.join(__dirname, 'views'));
@@ -143,7 +142,7 @@ app.post(`${adminPath}/login`, async (req, res) => {
     const ADMIN_PASS_HASH = process.env.ADMIN_PASSWORD_HASH;
 
     if (!ADMIN_PASS_HASH) {
-        console.error('FATAL: ADMIN_PASSWORD_HASH is not defined in .env file.');
+        console.error('FATAL: ADMIN_PASSWORD_HASH is not set in .env file.');
         req.app.set('layout', false);
         return res.status(500).render('admin/login', { error: 'Configuration server error.', adminPath });
     }
@@ -153,7 +152,6 @@ app.post(`${adminPath}/login`, async (req, res) => {
 
     if (isUserValid && isPasswordValid) {
         req.session.user = { username: ADMIN_USER };
-        // On successful login, redirect to a page that will have CSRF protection
         res.redirect(adminPath);
     } else {
         req.app.set('layout', false);
@@ -167,7 +165,7 @@ app.get(`${adminPath}/logout`, (req, res, next) => {
             console.error("Session destruction error:", err);
             return next(err);
         }
-        res.clearCookie('connect.sid'); // Default cookie name
+        res.clearCookie('connect.sid');
         res.redirect(`${adminPath}/login`);
     });
 });
@@ -175,11 +173,7 @@ app.get(`${adminPath}/logout`, (req, res, next) => {
 // Protected Admin Router
 const protectedAdminRouter = express.Router();
 protectedAdminRouter.use(requireLogin);
-protectedAdminRouter.use(csrfProtection); // Apply CSRF protection to all subsequent routes
-protectedAdminRouter.use((req, res, next) => { // Middleware to make CSRF token available to all admin views
-  res.locals.csrfToken = req.csrfToken();
-  next();
-});
+
 protectedAdminRouter.use((req, res, next) => {
   req.app.set('layout', 'admin/layout');
   next();
@@ -187,11 +181,8 @@ protectedAdminRouter.use((req, res, next) => {
 
 // Attach admin sub-routers
 protectedAdminRouter.use('/', adminRouter);
-protectedAdminRouter.use('/posts', postsRouter);
 protectedAdminRouter.use('/sections', sectionsRouter);
 protectedAdminRouter.use('/messages', messagesRouter);
-protectedAdminRouter.use('/events', eventsRouter);
-protectedAdminRouter.use('/members', membersRouter);
 protectedAdminRouter.use('/comments', commentsRouter);
 
 // --- MAIN ROUTING ---
@@ -213,6 +204,7 @@ app.use((req, res, next) => {
 });
 
 // Custom CSRF Error Handler
+const csurf = require('csurf');
 app.use((err, req, res, next) => {
   if (err.code === 'EBADCSRFTOKEN') {
     res.status(403);
