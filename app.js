@@ -61,7 +61,6 @@ const apiLimiter = rateLimit({
 });
 app.use('/contact', apiLimiter);
 app.use('/blog/:id/comment', apiLimiter);
-app.post(`${adminPath}/login`, apiLimiter);
 
 // Core Middleware
 app.use(logger('dev'));
@@ -139,7 +138,7 @@ app.get(`${adminPath}/login`, (req, res) => {
   res.render('admin/login', { error: null, adminPath, csrfToken: token });
 });
 
-app.post(`${adminPath}/login`, async (req, res) => {
+app.post(`${adminPath}/login`, apiLimiter, async (req, res) => {
     const { username, password } = req.body;
     const ADMIN_USER = process.env.ADMIN_USERNAME || 'admin';
     const ADMIN_PASS_HASH = process.env.ADMIN_PASSWORD_HASH;
