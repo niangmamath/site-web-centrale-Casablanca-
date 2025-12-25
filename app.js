@@ -85,7 +85,12 @@ app.use(session({
 }));
 
 // CSRF Protection
-const csrfProtection = csrf({ cookie: true });
+const csrfProtection = csrf({ 
+  cookie: { 
+    httpOnly: true, 
+    secure: process.env.NODE_ENV === 'production' 
+  } 
+});
 app.use(csrfProtection);
 
 // Global Middleware to count unread items
