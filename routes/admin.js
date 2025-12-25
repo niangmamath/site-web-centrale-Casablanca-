@@ -41,7 +41,7 @@ const memberRouter = createCrudRouter(Member, {
   routePath: 'members',
   fields: ['name', 'role', 'year', 'bio', 'linkedinUrl'],
   uploadOptions: { 
-    fieldName: 'image', // Corrected from 'photo' to 'image'
+    fieldName: 'image',
     folder: 'team-photos', 
     dbImageFieldName: 'imageUrl'
   },

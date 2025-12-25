@@ -1,13 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const csurf = require('csurf');
 const Post = require('../../models/post');
 const asyncHandler = require('../../utils/asyncHandler');
 const mongoose = require('mongoose');
-
-const csrfProtection = csurf({ cookie: true });
-
-router.use(csrfProtection);
 
 // GET all comments
 router.get('/', asyncHandler(async (req, res) => {
@@ -18,10 +13,10 @@ router.get('/', asyncHandler(async (req, res) => {
     postsWithComments.forEach(post => {
       const commentsToAdd = post.comments.map(comment => ({
         _id: comment._id,
-        author: comment.user,       // CORRIGÉ: Utilise le bon champ du modèle
-        content: comment.text,      // CORRIGÉ: Utilise le bon champ du modèle
-        createdAt: comment.date,    // CORRIGÉ: Utilise le bon champ du modèle
-        read: comment.read || false, // CORRIGÉ: Gère le nouveau champ
+        author: comment.user,
+        content: comment.text,
+        createdAt: comment.date,
+        read: comment.read || false,
         postId: post._id,
         postTitle: post.title
       }));
@@ -34,8 +29,8 @@ router.get('/', asyncHandler(async (req, res) => {
   res.render('admin/comments/index', {
     title: 'Gestion des Commentaires',
     comments: allComments,
-    csrfToken: req.csrfToken(),
-    layout: './admin/layout'
+    layout: './admin/layout',
+    csrfToken: req.csrfToken()
   });
 }));
 
@@ -47,7 +42,6 @@ router.post('/:commentId/toggle-read', asyncHandler(async (req, res) => {
     if (post) {
         const comment = post.comments.id(new mongoose.Types.ObjectId(commentId));
         if (comment) {
-            // La bascule fonctionne car `read` existe dans le schéma
             const newReadStatus = !comment.read;
             await Post.updateOne(
                 { 'comments._id': new mongoose.Types.ObjectId(commentId) },
@@ -59,7 +53,7 @@ router.post('/:commentId/toggle-read', asyncHandler(async (req, res) => {
 }));
 
 // DELETE a comment
-router.post('/:commentId/delete', asyncHandler(async (req, res) => {
+router.delete('/:commentId/delete', asyncHandler(async (req, res) => {
     const { commentId } = req.params;
     await Post.updateOne(
         { 'comments._id': new mongoose.Types.ObjectId(commentId) },

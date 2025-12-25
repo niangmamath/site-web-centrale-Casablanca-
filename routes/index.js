@@ -10,6 +10,7 @@ const Event = require('../models/event');
 const Member = require('../models/member');
 const Post = require('../models/post');
 const Message = require('../models/message');
+const Adherent = require('../models/adherent'); // Importer le modèle Adherent
 
 // Middleware to set default layout for all routes in this file
 router.use((req, res, next) => {
@@ -22,7 +23,7 @@ router.use((req, res, next) => {
 const renderPage = (req, res, view, title, options = {}) => {
   const defaultOptions = {
     title,
-    og: { description: `Description par défaut pour ${title}` },
+    og: { description: 'Centrale Quanta est votre porte d’entrée vers le monde fascinant de l’informatique quantique.' },
   };
   res.render(view, { ...defaultOptions, ...options });
 };
@@ -128,6 +129,26 @@ router.get('/team/:id', asyncHandler(async (req, res) => {
   renderPage(req, res, 'member-detail', member.name, { member, og });
 }));
 
+// Nouvelle route pour les adhérents
+router.get('/adherents', asyncHandler(async (req, res) => {
+  const adherents = await Adherent.find().sort({ year: -1 });
+
+  // Group adherents by year
+  const adherentsByYear = adherents.reduce((acc, adherent) => {
+    if (!acc[adherent.year]) {
+      acc[adherent.year] = [];
+    }
+    acc[adherent.year].push(adherent);
+    return acc;
+  }, {});
+
+  renderPage(req, res, 'adherents', 'Liste des Adhérents', { 
+    adherentsByYear, 
+    og: { description: 'Découvrez la liste de tous les adhérents de Centrale Casablanca, année par année.' } 
+  });
+}));
+
+
 router.get('/contact', (req, res) => {
   renderPage(req, res, 'contact', 'Contactez-nous', { 
     status: req.query.status, 
@@ -162,6 +183,7 @@ router.get('/sitemap.xml', asyncHandler(async (req, res) => {
     { url: '/blog', changefreq: 'weekly', priority: 0.8 },
     { url: '/events', changefreq: 'monthly', priority: 0.7 },
     { url: '/team', changefreq: 'monthly', priority: 0.6 },
+    { url: '/adherents', changefreq: 'monthly', priority: 0.5 }, // Ajout de la page adhérents au sitemap
     { url: '/contact', changefreq: 'yearly', priority: 0.5 },
   ];
 

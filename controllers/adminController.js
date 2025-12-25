@@ -1,11 +1,9 @@
 const express = require('express');
 const multer = require('multer');
 const streamifier = require('streamifier');
-const csurf = require('csurf');
 const cloudinary = require('../config/cloudinary');
 const asyncHandler = require('../utils/asyncHandler');
 
-const csrfProtection = csurf({ cookie: true });
 const upload = multer({ storage: multer.memoryStorage() });
 
 const uploadToCloudinary = (fileBuffer, folder) => {
@@ -21,49 +19,52 @@ const uploadToCloudinary = (fileBuffer, folder) => {
 const createCrudRouter = (Model, { viewPath, routePath, fields, uploadOptions }) => {
   const router = express.Router();
 
-  const addCsrfTokenToLocals = (req, res, next) => {
-    res.locals.csrfToken = req.csrfToken();
-    next();
-  };
-
   const singularName = viewPath.slice(0, -1);
 
-  router.get('/', csrfProtection, addCsrfTokenToLocals, asyncHandler(async (req, res) => {
+  router.get('/', asyncHandler(async (req, res) => {
     const items = await Model.find().sort({ createdAt: -1 });
     res.render(`admin/${viewPath}/index`, { 
       items, 
       title: `Gérer ${routePath}`,
       routePath: routePath,
-      layout: './admin/layout'
+      layout: './admin/layout',
+      csrfToken: req.csrfToken() // FIX: Pass CSRF token for delete forms
     });
   }));
 
   const renderAddForm = (req, res) => {
-    res.render(`admin/${viewPath}/add`, {
+    const item = {};
+    const viewData = {
       title: `Ajouter un ${singularName}`,
       action: `${res.locals.adminPath}/${routePath}/add`,
-      item: {},
       tinymceApiKey: process.env.TINYMCE_API_KEY,
+      csrfToken: req.csrfToken(),
       layout: './admin/layout'
-    });
+    };
+    viewData[singularName] = item; // Use dynamic key for consistency
+    viewData['item'] = item; // Keep for backward compatibility
+    res.render(`admin/${viewPath}/add`, viewData);
   };
 
-  router.get('/add', csrfProtection, addCsrfTokenToLocals, renderAddForm);
-  router.get('/new', csrfProtection, addCsrfTokenToLocals, renderAddForm);
+  router.get('/add', renderAddForm);
+  router.get('/new', renderAddForm);
 
-  router.get('/edit/:id', csrfProtection, addCsrfTokenToLocals, asyncHandler(async (req, res) => {
+  router.get('/edit/:id', asyncHandler(async (req, res) => {
     const item = await Model.findById(req.params.id);
-    res.render(`admin/${viewPath}/edit`, {
+    const viewData = {
       title: `Modifier un ${singularName}`,
       action: `${res.locals.adminPath}/${routePath}/edit/${item._id}?_method=PUT`,
-      item,
       tinymceApiKey: process.env.TINYMCE_API_KEY,
+      csrfToken: req.csrfToken(),
       layout: './admin/layout'
-    });
+    };
+    viewData[singularName] = item; // FIX: Pass item with dynamic key (e.g., 'post', 'event')
+    viewData['item'] = item; // Keep for backward compatibility
+    res.render(`admin/${viewPath}/edit`, viewData);
   }));
 
   const uploadMiddleware = uploadOptions ? upload.single(uploadOptions.fieldName) : (req, res, next) => next();
-  const postMiddlewares = [uploadMiddleware, csrfProtection];
+  const postMiddlewares = [uploadMiddleware];
 
   const createItemHandler = asyncHandler(async (req, res) => {
     const newItem = new Model();
@@ -106,7 +107,7 @@ const createCrudRouter = (Model, { viewPath, routePath, fields, uploadOptions })
     res.redirect(`${res.locals.adminPath}/${routePath}`);
   }));
 
-  router.delete('/delete/:id', csrfProtection, asyncHandler(async (req, res) => {
+  router.delete('/delete/:id', asyncHandler(async (req, res) => {
     await Model.findByIdAndDelete(req.params.id);
     res.redirect(`${res.locals.adminPath}/${routePath}`);
   }));

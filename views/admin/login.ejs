@@ -40,7 +40,7 @@
         <% } %>
 
         <form action="<%= adminPath %>/login" method="POST" class="space-y-6">
-          
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
           <div class="relative group input-glow transition-shadow duration-300 rounded-lg">
             <i class="fas fa-user absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-400 transition-colors duration-300"></i>
             <input type="text" id="username" name="username" required

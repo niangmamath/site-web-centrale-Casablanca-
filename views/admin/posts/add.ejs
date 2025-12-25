@@ -1,6 +1,6 @@
 <h1 class="text-3xl font-bold mb-8">Ajouter un Article</h1>
 
-<form action="<%= adminPath %>/posts/add" method="POST" enctype="multipart/form-data" class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-md">
+<form action="<%= adminPath %>/posts/add?_csrf=<%- csrfToken %>" method="POST" enctype="multipart/form-data" class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-md">
 <input type="hidden" name="_csrf" value="<%- csrfToken %>">
 
   <div class="mb-6">

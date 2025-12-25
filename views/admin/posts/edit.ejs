@@ -1,6 +1,6 @@
 <h1 class="text-3xl font-bold mb-8">Modifier un Article</h1>
 
-<form action="<%= adminPath %>/posts/edit/<%= post._id %>?_method=PUT" method="POST" enctype="multipart/form-data" class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-md mb-12">
+<form action="<%= adminPath %>/posts/edit/<%= post._id %>?_method=PUT&_csrf=<%- csrfToken %>" method="POST" enctype="multipart/form-data" class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-md mb-12">
 <input type="hidden" name="_csrf" value="<%- csrfToken %>">
 
   <div class="mb-6">
