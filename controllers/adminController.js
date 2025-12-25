@@ -4,7 +4,10 @@ const streamifier = require('streamifier');
 const cloudinary = require('../config/cloudinary');
 const asyncHandler = require('../utils/asyncHandler');
 
-const upload = multer({ storage: multer.memoryStorage() });
+const upload = multer({ 
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
+});
 
 const uploadToCloudinary = (fileBuffer, folder) => {
   return new Promise((resolve, reject) => {
