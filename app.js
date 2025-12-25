@@ -14,6 +14,7 @@ const methodOverride = require('method-override');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const bcrypt = require('bcrypt');
+const csrf = require('csurf');
 
 // Models
 const Message = require('./models/message');
@@ -43,7 +44,7 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         ...helmet.contentSecurityPolicy.getDefaultDirectives(),
-        "script-src": ["'self'", "https://cdn.tailwindcss.com", "https://cdn.tiny.cloud", "'unsafe-inline'"], // CORRIGÉ : Ajout de cdn.tiny.cloud
+        "script-src": ["'self'", "https://cdn.tailwindcss.com", "https://cdn.tiny.cloud", "'unsafe-inline'"], 
         "style-src": ["'self'", "https://cdnjs.cloudflare.com", "https://cdn.tiny.cloud", "'unsafe-inline'"],
         "font-src": ["'self'", "https://cdnjs.cloudflare.com"],
         "img-src": ["'self'", "data:", "res.cloudinary.com"],
@@ -60,13 +61,12 @@ const apiLimiter = rateLimit({
 });
 app.use('/contact', apiLimiter);
 app.use('/blog/:id/comment', apiLimiter);
-app.post(`${adminPath}/login`, apiLimiter);
 
 // Core Middleware
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
+app.use(cookieParser(process.env.COOKIE_SECRET)); // Use secret for cookie parser
 app.use(express.static(path.join(__dirname, 'dist')));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(methodOverride('_method'));
@@ -84,16 +84,23 @@ app.use(session({
   }
 }));
 
+// CSRF Protection
+const csrfProtection = csrf({ 
+  cookie: { 
+    httpOnly: true, 
+    secure: process.env.NODE_ENV === 'production' 
+  } 
+});
+app.use(csrfProtection);
+
 // Global Middleware to count unread items
 app.use(async (req, res, next) => {
     res.locals.adminPath = adminPath;
     res.locals.user = req.session.user;
     if (req.session.user && req.originalUrl.startsWith(adminPath)) {
         try {
-            // Count unread messages (works perfectly)
+            res.locals.csrfToken = req.csrfToken(); // Make CSRF token available in admin views
             const unreadMessageCount = await Message.countDocuments({ read: false });
-
-            // Correctly count unread comments using a robust aggregation pipeline
             const unreadCommentsResult = await Post.aggregate([
                 { $unwind: '$comments' },
                 { $match: { 'comments.read': false } },
@@ -130,13 +137,13 @@ const requireLogin = (req, res, next) => {
     next();
 };
 
-// Login routes are placed BEFORE CSRF protection is applied
 app.get(`${adminPath}/login`, (req, res) => {
   req.app.set('layout', false);
-  res.render('admin/login', { error: null, adminPath });
+  const token = req.csrfToken();
+  res.render('admin/login', { error: null, adminPath, csrfToken: token });
 });
 
-app.post(`${adminPath}/login`, async (req, res) => {
+app.post(`${adminPath}/login`, apiLimiter, async (req, res) => {
     const { username, password } = req.body;
     const ADMIN_USER = process.env.ADMIN_USERNAME || 'admin';
     const ADMIN_PASS_HASH = process.env.ADMIN_PASSWORD_HASH;
@@ -144,7 +151,7 @@ app.post(`${adminPath}/login`, async (req, res) => {
     if (!ADMIN_PASS_HASH) {
         console.error('FATAL: ADMIN_PASSWORD_HASH is not set in .env file.');
         req.app.set('layout', false);
-        return res.status(500).render('admin/login', { error: 'Configuration server error.', adminPath });
+        return res.status(500).render('admin/login', { error: 'Configuration server error.', adminPath, csrfToken: req.csrfToken() });
     }
 
     const isUserValid = (username === ADMIN_USER);
@@ -155,7 +162,7 @@ app.post(`${adminPath}/login`, async (req, res) => {
         res.redirect(adminPath);
     } else {
         req.app.set('layout', false);
-        res.render('admin/login', { error: 'Identifiants incorrects.', adminPath });
+        res.render('admin/login', { error: 'Identifiants incorrects.', adminPath, csrfToken: req.csrfToken() });
     }
 });
 
@@ -203,28 +210,25 @@ app.use((req, res, next) => {
   next(createError(404));
 });
 
-// Custom CSRF Error Handler
-const csurf = require('csurf');
-app.use((err, req, res, next) => {
-  if (err.code === 'EBADCSRFTOKEN') {
-    res.status(403);
-    res.render('error', {
-      message: 'Action non autorisée. Jeton de sécurité invalide ou manquant.',
-      error: req.app.get('env') === 'development' ? err : {},
-      layout: false
-    });
-  } else {
-    next(err);
-  }
-});
-
 // General Error Handler
 app.use((err, req, res, next) => {
+  // Handle CSRF errors from tiny-csrf
+  if (err.code === 'EBADCSRFTOKEN') {
+      res.status(403).render('error', {
+          message: 'Action non autorisée. Jeton de sécurité invalide ou expiré.',
+          error: req.app.get('env') === 'development' ? err : {},
+          layout: false
+      });
+      return;
+  }
+
+  // General error handling
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
   res.status(err.status || 500);
   res.render('error', { layout: false });
 });
+
 
 // Start Server
 const PORT = process.env.PORT || 3002;

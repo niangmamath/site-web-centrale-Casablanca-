@@ -1,13 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const csurf = require('csurf');
 const Message = require('../../models/message');
 const asyncHandler = require('../../utils/asyncHandler');
-
-const csrfProtection = csurf({ cookie: true });
-
-// Apply CSRF protection to all routes in this router
-router.use(csrfProtection);
 
 // GET all messages
 router.get('/', asyncHandler(async (req, res, next) => {
@@ -15,8 +9,8 @@ router.get('/', asyncHandler(async (req, res, next) => {
   res.render('admin/messages/index', { 
     title: 'Messages Reçus', 
     messages: messages,
-    csrfToken: req.csrfToken(), // Pass CSRF token to the view
-    layout: './admin/layout'
+    layout: './admin/layout',
+    csrfToken: req.csrfToken()
   });
 }));
 
