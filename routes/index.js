@@ -42,7 +42,7 @@ router.get('/blog/:id', asyncHandler(async (req, res) => {
   const post = await Post.findById(req.params.id);
   if (!post) return res.status(404).render('404');
   
-  const recentPosts = await Post.find({ _id: { $ne: req.params.id } }).sort({ createdAt: -1 }).limit(3);
+  const recentPosts = await Post.find({ _id: { $ne: post._id } }).sort({ createdAt: -1 }).limit(3);
   const og = {
     title: post.title,
     description: post.content.substring(0, 200).replace(/<[^>]*>/g, '').trim(),
